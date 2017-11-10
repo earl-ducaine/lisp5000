@@ -1,6 +1,7 @@
 (funcall #'(setf iref)
 	 #'(lambda (object) (= (ldb (cons 2 0) (ival object)) 1))
 	 'consp 5)
+
 (funcall #'(setf iref)
 	 #'(lambda (new-definition function-name)
 	     (if (consp function-name)
@@ -99,7 +100,7 @@
     (when (and (consp (car binding))
 	       (= (floor (ival (cdar binding)) 16) 1)
 	       (eq (caar binding) symbol))
-      (return-from macro-function 
+      (return-from macro-function
 	(when (= (ldb '(1 . 4) (ival (cdr binding))) 1)
 	  (cdr binding)))))"
   (if (= (ldb '(1 . 1) (iref symbol 8)) 1)

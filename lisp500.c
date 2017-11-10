@@ -23,44 +23,45 @@ typedef long lval;
 lval strf(lval * f, const char *s);
 
 lval* o2c(lval o) {
-
   return (lval *) (o - 1);
 }
 
-lval c2o(lval * c)
-{
+lval c2o(lval * c) {
   return (lval) c + 1;
 }
 
-int cp(lval o)
-{
+int cp(lval o) {
   return (o & 3) == 1;
 }
+
 lval *o2a(lval o) {
   return (lval *) (o - 2);
 }
-lval a2o(lval * a)
-{
+
+lval a2o(lval * a) {
   return (lval) a + 2;
 }
-int ap(lval o)
-{
+
+int ap(lval o) {
   return (o & 3) == 2;
 }
+
 lval *o2s(lval o) {
   return (lval *) (o - 3);
 }
+
 char *o2z(lval o) {
   return (char *) (o - 3 + 2 * sizeof(lval));
 }
-lval s2o(lval * s)
-{
+
+lval s2o(lval * s) {
   return (lval) s + 3;
 }
-int sp(lval o)
-{
+
+int sp(lval o) {
   return (o & 3) == 3;
 }
+
 struct symbol_init {
   const char *name;
   lval(*fun) ();
@@ -69,7 +70,9 @@ struct symbol_init {
   int setargc;
   lval sym;
 };
+
 extern struct symbol_init symi[];
+
 #define TRUE symi[1].sym
 #define T g[-2]
 #define U g[-3]
@@ -78,36 +81,48 @@ extern struct symbol_init symi[];
 #define NF(n) lval *g; g=f+n+3; f[1]=0; g[-1]=(n<<5)|16; *g=*f;
 #define E *f
 #define NE *g
-lval car(lval c)
-{
+
+lval car(lval c) {
   return (c & 3) == 1 ? o2c(c)[0] : 0;
 }
-lval cdr(lval c)
-{
+
+lval cdr(lval c) {
   return (c & 3) == 1 ? o2c(c)[1] : 0;
 }
+
 lval caar(lval c) {
   return car(car(c));
-} lval lread(lval *);
+}
+
+lval lread(lval *);
+
 lval cdar(lval c) {
   return cdr(car(c));
-} lval evca(lval *, lval);
+}
+
+lval evca(lval *, lval);
+
 lval cadr(lval c) {
   return car(cdr(c));
-} int dbgr(lval *, int, lval, lval *);
+}
+
+int debugger(lval *, int, lval, lval *);
+
 lval cddr(lval c) {
   return cdr(cdr(c));
-} void print(lval);
-lval set_car(lval c, lval val)
-{
+}
+
+void print(lval);
+
+lval set_car(lval c, lval val) {
   return o2c(c)[0] = val;
 }
-lval set_cdr(lval c, lval val)
-{
+
+lval set_cdr(lval c, lval val) {
   return o2c(c)[1] = val;
 }
-lval *binding(lval * f, lval sym, int type, int *macro)
-{
+
+lval *binding(lval * f, lval sym, int type, int *macro) {
   lval env;
  st:
   for (env = E; env; env = cdr(env)) {
@@ -121,7 +136,7 @@ lval *binding(lval * f, lval sym, int type, int *macro)
   if (macro)
     *macro = (o2a(sym)[8] >> type) & 32;
   if (type > 2) {
-    dbgr(f, type, sym, &sym);
+    debugger(f, type, sym, &sym);
     goto st;
   }
   return o2a(sym) + 4 + type;
@@ -344,6 +359,7 @@ int string_equal(lval a, lval b)
 		    o2s(a)[1] == 20 && o2s(b)[1] == 20 && o2s(a)[0] == o2s(b)[0]
 		    && string_equal_do(a, b));
 }
+
 lval argi(lval a, lval * b) {
   if (cp(a)) {
     *b = cdr(a);
@@ -352,6 +368,7 @@ lval argi(lval a, lval * b) {
   *b = 0;
   return a;
 }
+
 lval rest(lval * h, lval * g)
 {
   lval *f = h - 1;
@@ -360,9 +377,10 @@ lval rest(lval * h, lval * g)
     r = cons(h, *f, r);
   return r;
 }
+
 lval args(lval *, lval, int);
-lval argd(lval * f, lval n, lval a)
-{
+
+lval argd(lval * f, lval n, lval a) {
   if (cp(n)) {
     lval *h = f;
     for (; a; a = cdr(a))
@@ -373,8 +391,8 @@ lval argd(lval * f, lval n, lval a)
   }
   return cons(f, cons(f, n, a), *f);
 }
-lval args(lval * f, lval m, int c)
-{
+
+lval args(lval * f, lval m, int c) {
   lval *g = f + 1;
   lval *h = f + c + 2;
   int t;
@@ -404,7 +422,7 @@ lval args(lval * f, lval m, int c)
       switch (t) {
       case 0:
 	if (g >= h - 1) {
-	  dbgr(g, 7, 0, h);
+	  debugger(g, 7, 0, h);
 	  goto st;
 	} *h = argd(h, n, *g);
 	break;
@@ -438,7 +456,7 @@ lval args(lval * f, lval m, int c)
       return cons(h, cons(h, m, rest(h - 1, g)), *h);
   if (g < h - 1 && t >= 0) {
     h[-1] = (c << 5) | 16;
-    dbgr(h, 6, 0, h);
+    debugger(h, 6, 0, h);
     goto st;
   } return *h;
 }
@@ -457,21 +475,23 @@ int map_eval(lval * f, lval ex) {
     g[-1] = evca(g, ex);
   } return g - f - 3;
 }
+
 lval eval(lval * f, lval expr) {
   NF(1) T = 0;
   T = cons(g, expr, 0);
   return evca(g, T);
 }
-lval rvalues(lval * g, lval v)
-{
+
+lval rvalues(lval * g, lval v) {
   return xvalues == 8 ? cons(g, v, 0) : xvalues;
 }
+
 lval mvalues(lval a) {
   xvalues = a;
   return car(a);
 }
-lval infn(lval * f, lval * h)
-{
+
+lval infn(lval * f, lval * h) {
   jmp_buf jmp;
   lval vs;
   lval *g = h + 1;
@@ -487,8 +507,7 @@ lval infn(lval * f, lval * h)
   return mvalues(car(vs));
 }
 
-lval call(lval * f, lval fn, unsigned d)
-{
+lval call(lval * f, lval fn, unsigned d) {
   lval *g = f + d + 3;
   xvalues = 8;
   if (o2a(fn)[1] == 20)
@@ -498,9 +517,9 @@ lval call(lval * f, lval fn, unsigned d)
   *++f = fn;
   fn = o2a(fn)[2];
   if (d < (unsigned) o2s(fn)[3])
-    dbgr(g, 7, 0, f);
+    debugger(g, 7, 0, f);
   if (d > (unsigned) o2s(fn)[4])
-    dbgr(g, 6, 0, f);
+    debugger(g, 6, 0, f);
   return ((lval(*) ()) o2s(fn)[2]) (f, f + d + 1);
 }
 
@@ -579,6 +598,7 @@ lval eval_letm(lval * f, lval ex) {
   unwind(g, cdr(dyns));
   return T;
 }
+
 lval eval_progv(lval * f, lval ex) {
   lval r;
   NF(2) T = U = 0;
@@ -593,6 +613,7 @@ lval eval_progv(lval * f, lval ex) {
   unwind(f, cdr(dyns));
   return T;
 }
+
 lval eval_flet(lval * f, lval ex) {
   NF(4) V = W = 0;
   U = E;
@@ -647,6 +668,7 @@ lval eval_setq(lval * f, lval ex) {
   } while (ex);
   return r;
 }
+
 lval eval_function(lval * f, lval ex) {
   lval x;
   ex = car(ex);
@@ -666,11 +688,11 @@ lval eval_function(lval * f, lval ex) {
     x = *binding(f, ex, 1, 0);
   if (x != 8)
     return x;
-  dbgr(f, 1, ex, &x);
+  debugger(f, 1, ex, &x);
   return x;
 }
-lval eval_tagbody(lval * f, lval ex)
-{
+
+lval eval_tagbody(lval * f, lval ex) {
   jmp_buf jmp;
   lval tag;
   lval e;
@@ -696,12 +718,13 @@ lval eval_tagbody(lval * f, lval ex)
   unwind(g, cdr(dyns));
   return 0;
 }
+
 lval eval_go(lval * f, lval ex) {
   lval b = *binding(f, car(ex), 3, 0);
   if (o2s(cdr(b))[2]) {
     unwind(f, car(b));
     longjmp(*(jmp_buf *) (o2s(cdr(b))[2]), car(ex));
-  } dbgr(f, 9, car(ex), &ex);
+  } debugger(f, 9, car(ex), &ex);
   longjmp(top_jmp, 1);
 }
 lval eval_block(lval * f, lval ex)
@@ -731,7 +754,7 @@ lval eval_return_from(lval * f, lval ex)
     unwind(g, car(b));
     T = rvalues(g, evca(g, cdr(ex)));
     longjmp(*jmp, cons(g, T, 0));
-  } dbgr(g, 8, car(ex), &T);
+  } debugger(g, 8, car(ex), &T);
   longjmp(top_jmp, 1);
 }
 lval eval_catch(lval * f, lval ex)
@@ -764,7 +787,7 @@ lval eval_throw(lval * f, lval ex) {
       T = rvalues(g, T);
       longjmp(*(jmp_buf *) (o2s(cdar(c))[2]), cons(g, T, 0));
     }
-  dbgr(g, 5, T, &T);
+  debugger(g, 5, T, &T);
   goto st;
 }
 lval eval_unwind_protect(lval * f, lval ex) {
@@ -822,7 +845,7 @@ lval eval_setf(lval * f, lval ex)
     goto ag;
   } r = *binding(g, caar(ex), 2, 0);
   if (r == 8)
-    dbgr(g, 1, l2(f, symi[33].sym, caar(ex)), &r);
+    debugger(g, 1, l2(f, symi[33].sym, caar(ex)), &r);
   T = cons(g, cadr(ex), cdar(ex));
   return call(g, r, map_eval(g, T));
 }
@@ -965,12 +988,15 @@ lval stringify(lval * f, lval l)
     ((char *) r)[i] = car(l) >> 5;
   return s2o(r);
 }
+
 lval lstring(lval * f, lval * h) {
   return stringify(f, rest(h, f + 1));
 }
+
 lval lival(lval * f) {
   return d2o(f, f[1]);
 }
+
 lval lmakei(lval* f, lval* h) {
   long i = 2;
   long l = o2i(f[1]);
@@ -985,99 +1011,105 @@ lval lmakei(lval* f, lval* h) {
   return a2o(r);
 }
 
-lval liboundp(lval * f)
-{
+lval liboundp(lval * f) {
   return o2a(f[1])[o2u(f[2])] == 8 ? 0 : TRUE;
 }
-lval limakunbound(lval * f)
-{
+
+lval limakunbound(lval * f) {
   o2a(f[1])[o2u(f[2])] = 8;
   return 0;
 }
+
 lval liref(lval * f) {
   if (o2u(f[2]) >= o2a(f[1])[0] / 256 + 2)
     write(1, "out of bounds in iref\n", 22);
   return ((lval *) (f[1] & ~3))[o2u(f[2])] & ~4;
 }
+
 lval setfiref(lval * f) {
   int i = o2i(f[3]);
   if (i >= o2a(f[2])[0] / 256 + 2)
     printf("out of bounds in setf iref\n");
   return ((lval *) (f[2] & ~3))[i] = i == 1 ? f[1] | 4 : f[1];
 }
+
 lval lmakej(lval * f) {
   lval *r = mb0(f, o2i(f[1]));
   r[1] = o2i(f[2]);
   memset(r + 2, 0, (o2i(f[1]) + 7) / 8);
   return s2o(r);
 }
+
 lval ljref(lval * f) {
   return d2o(f, o2s(f[1])[o2u(f[2])]);
 }
+
 lval setfjref(lval * f) {
   return o2s(f[2])[o2u(f[3])] = o2u(f[1]);
 }
-#ifdef _WIN32
-lval lmake_fs(lval * f) {
-  HANDLE fd = CreateFile(o2z(f[1]), f[2] ? GENERIC_WRITE :
-			 GENERIC_READ, f[2] ? FILE_SHARE_WRITE : FILE_SHARE_READ, NULL, OPEN_EXISTING,
-			 FILE_ATTRIBUTE_NORMAL, NULL);
-  return ms(f, 4, 116, 1, fd, f[2], 0);
-}
-lval lclose_fs(lval * f) {
-  CloseHandle(o2s(f[1])[3]);
-  return 0;
-}
-lval llisten_fs(lval * f)
-{
-  return WaitForSingleObject(o2s(f[1])[3], 0) == WAIT_OBJECT_0 ? TRUE : 0;
-}
-lval lread_fs(lval * f) {
-  int l = o2i(f[3]);
-  if (!ReadFile(o2s(f[1])[3],
-		o2z(f[2]) + l, (o2s(f[2])[0] >> 6) - 4 - l, &l, NULL))
-    return 0;
-  return d2o(f, l);
-}
-lval lwrite_fs(lval * f) {
-  int l = o2i(f[3]);
-  if (!WriteFile(o2s(f[1])[3],
-		 o2z(f[2]) + l, o2i(f[4]) - l, &l, NULL))
-    return 0;
-  return d2o(f, l);
-}
-lval lfinish_fs(lval * f) {
-  FlushFileBuffers(o2s(f[1])[3]);
-  return 0;
-}
-lval lfasl(lval * f) {
-  HMODULE h;
-  FARPROC s;
-  h = LoadLibrary(o2z(f[1]));
-  s = GetProcAddress(h, "init");
-  return s(f);
-}
-lval luname(lval * f)
-{
-  OSVERSIONINFO osvi;
-  osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-  GetVersionEx(&osvi);
-  f[1] = cons(f + 1, strf(f + 1, osvi.szCSDVersion), 0);
-  f[1] = cons(f + 1, d2o(f + 1, osvi.dwBuildNumber), f[1]);
-  f[1] = cons(f + 1, d2o(f + 1, osvi.dwMinorVersion), f[1]);
-  return cons(f + 1, d2o(f, osvi.dwMajorVersion), f[1]);
-}
-#else
+
+/* #ifdef _WIN32 */
+/* lval lmake_fs(lval * f) { */
+/*   HANDLE fd = CreateFile(o2z(f[1]), f[2] ? GENERIC_WRITE : */
+/* 			 GENERIC_READ, f[2] ? FILE_SHARE_WRITE : FILE_SHARE_READ, NULL, OPEN_EXISTING, */
+/* 			 FILE_ATTRIBUTE_NORMAL, NULL); */
+/*   return ms(f, 4, 116, 1, fd, f[2], 0); */
+/* } */
+/* lval lclose_fs(lval * f) { */
+/*   CloseHandle(o2s(f[1])[3]); */
+/*   return 0; */
+/* } */
+/* lval llisten_fs(lval * f) */
+/* { */
+/*   return WaitForSingleObject(o2s(f[1])[3], 0) == WAIT_OBJECT_0 ? TRUE : 0; */
+/* } */
+/* lval lread_fs(lval * f) { */
+/*   int l = o2i(f[3]); */
+/*   if (!ReadFile(o2s(f[1])[3], */
+/* 		o2z(f[2]) + l, (o2s(f[2])[0] >> 6) - 4 - l, &l, NULL)) */
+/*     return 0; */
+/*   return d2o(f, l); */
+/* } */
+/* lval lwrite_fs(lval * f) { */
+/*   int l = o2i(f[3]); */
+/*   if (!WriteFile(o2s(f[1])[3], */
+/* 		 o2z(f[2]) + l, o2i(f[4]) - l, &l, NULL)) */
+/*     return 0; */
+/*   return d2o(f, l); */
+/* } */
+/* lval lfinish_fs(lval * f) { */
+/*   FlushFileBuffers(o2s(f[1])[3]); */
+/*   return 0; */
+/* } */
+/* lval lfasl(lval * f) { */
+/*   HMODULE h; */
+/*   FARPROC s; */
+/*   h = LoadLibrary(o2z(f[1])); */
+/*   s = GetProcAddress(h, "init"); */
+/*   return s(f); */
+/* } */
+/* lval luname(lval * f) */
+/* { */
+/*   OSVERSIONINFO osvi; */
+/*   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO); */
+/*   GetVersionEx(&osvi); */
+/*   f[1] = cons(f + 1, strf(f + 1, osvi.szCSDVersion), 0); */
+/*   f[1] = cons(f + 1, d2o(f + 1, osvi.dwBuildNumber), f[1]); */
+/*   f[1] = cons(f + 1, d2o(f + 1, osvi.dwMinorVersion), f[1]); */
+/*   return cons(f + 1, d2o(f, osvi.dwMajorVersion), f[1]); */
+/* } */
+/* #else */
 lval lmake_fs(lval * f) {
   int fd = open(o2z(f[1]), f[2] ? O_WRONLY | O_CREAT | O_TRUNC : O_RDONLY, 0600);
   return fd >= 0 ? ms(f, 4, 116, 1, fd, f[2], 0) : d2o(f, errno);
 }
+
 lval lclose_fs(lval * f) {
   close(o2s(f[1])[3]);
   return 0;
 }
-lval llisten_fs(lval * f)
-{
+
+lval llisten_fs(lval * f) {
   fd_set r;
   struct timeval t;
   t.tv_sec = 0;
@@ -1086,22 +1118,26 @@ lval llisten_fs(lval * f)
   FD_SET(o2s(f[1])[3], &r);
   return select(o2s(f[1])[3] + 1, &r, NULL, NULL, &t) ? TRUE : 0;
 }
+
 lval lread_fs(lval * f) {
   int l = o2i(f[3]);
   l = read(o2s(f[1])[3], o2z(f[2]) + l,
 	   (o2s(f[2])[0] >> 6) - 4 - l);
   return l < 0 ? cons(f, errno, 0) : d2o(f, l);
 }
+
 lval lwrite_fs(lval * f) {
   int l = o2i(f[3]);
   l = write(o2s(f[1])[3],
 	    o2z(f[2]) + l, o2i(f[4]) - l);
   return l < 0 ? cons(f, errno, 0) : d2o(f, l);
 }
+
 lval lfinish_fs(lval * f) {
   fsync(o2s(f[1])[3]);
   return 0;
 }
+
 lval lfasl(lval * f) {
   void *h;
   lval(*s) ();
@@ -1109,6 +1145,7 @@ lval lfasl(lval * f) {
   s = dlsym(h, "init");
   return s(f);
 }
+
 lval luname(lval * f) {
   struct utsname un;
   uname(&un);
@@ -1117,8 +1154,10 @@ lval luname(lval * f) {
   f[1] = cons(f + 1, strf(f + 1, un.release), f[1]);
   return cons(f + 1, strf(f, un.sysname), f[1]);
 }
-#endif
+
+/* #endif */
 FILE *ins;
+
 void load(lval * f, char *s) {
   lval r;
   FILE *oldins = ins;
@@ -1131,6 +1170,7 @@ void load(lval * f, char *s) {
   }
   ins = oldins;
 }
+
 lval lload(lval * f) {
   load(f, o2z(f[1]));
   return symi[1].sym;
@@ -1236,7 +1276,7 @@ lval lprint(lval * f) {
   print(f[1]);
   return f[1];
 }
-int ep(lval * g, lval expr) {
+int eval_print(lval * g, lval expr) {
   int i;
   lval v = rvalues(g, eval(g, expr));
   if (car(v) == 8)
@@ -1251,12 +1291,20 @@ int ep(lval * g, lval expr) {
     printf(";no values\n");
   return 1;
 }
-char *exmsg[] = {"variable unbound", "function unbound",
-		 "array index out of bounds", "go tag not bound", "block name not bound",
-		 "catch tag not dynamically bound", "too many arguments", "too few arguments",
-		 "dynamic extent of block exited", "dynamic extent of tagbody exited"};
-int dbgr(lval * f, int x, lval val, lval * vp)
-{
+
+char *exmsg[] = {
+  "variable unbound",
+  "function unbound",
+  "array index out of bounds",
+  "go tag not bound",
+  "block name not bound",
+  "catch tag not dynamically bound",
+  "too many arguments",
+  "too few arguments",
+  "dynamic extent of block exited",
+  "dynamic extent of tagbody exited"};
+
+int debugger(lval * f, int x, lval val, lval * vp) {
   lval ex;
   int i;
   lval *h = f;
@@ -1311,34 +1359,41 @@ int dbgr(lval * f, int x, lval val, lval * vp)
 	return 0;
       }
     } else
-      ep(h, ex);
+      eval_print(h, ex);
   }
 }
-lval evca(lval * f, lval co) {
+
+lval evca(lval* f, lval co) {
   lval ex = car(co);
   lval x = ex;
   int m;
- ag:	xvalues = 8;
+ ag:
+  xvalues = 8;
   if (cp(ex)) {
     lval fn = 8;
-    if (ap(car(ex)) && o2a(car(ex))[1] == 20) {
+    if (ap(car(ex)) && (o2a(car(ex))[1] == 20)) {
       int i = o2a(car(ex))[7] >> 3;
-      if (i > 11 && i < 34)
+      if (i > 11 && i < 34) {
 	return symi[i].fun(f, cdr(ex));
+      }
       fn = *binding(f, car(ex), 1, &m);
       if (m) {
 	lval *g = f + 1;
-	for (ex = cdr(ex); ex; ex = cdr(ex))
+	for (ex = cdr(ex); ex; ex = cdr(ex)) {
 	  *++g = car(ex);
+	}
 	x = ex = call(f, fn, g - f - 1);
 	set_car(co, ex);
 	goto ag;
       }
-    } st:		if (fn == 8) {
-      if (dbgr(f, 1, car(ex), &fn))
+    }
+  st:
+    if (fn == 8) {
+      if (debugger(f, 1, car(ex), &fn)) {
 	return fn;
-      else
+      } else {
 	goto st;
+      }
     } ex = cdr(ex);
     ex = call(f, fn, map_eval(f, ex));
   } else if (ap(ex) && o2a(ex)[1] == 20) {
@@ -1348,10 +1403,13 @@ lval evca(lval * f, lval co) {
       set_car(co, ex);
       goto ag;
     }
-    if (ex == 8)
-      dbgr(f, 0, x, &ex);
-  } return ex == -8 ? o2a(x)[4] : ex;
+    if (ex == 8) {
+      debugger(f, 0, x, &ex);
+    }
+  }
+  return ex == -8 ? o2a(x)[4] : ex;
 }
+
 int getnws() {
   int c;
   do
@@ -1488,72 +1546,73 @@ lval make_package(lval* f, const char* s0, const char* s1) {
 	    l2(f, strf(f, s0), strf(f, s1)), mkv(f), mkv(f), 0, 0, 0);
 }
 
-#if 0
-lval fr(lval * o, lval * p, lval * s, lval * c, lval * b, lval x)
-{
-  int t;
-  if (!(x & 3))
-    return x;
-  t = (x >> 30) & 3;
-  x &= 0x3fffffff;
-  switch (t) {
-  case 0:
-    return sp(x) ? (lval) o + x : (lval) b + x;
-  case 1:
-    return c[x / 4];
-  case 2:
-    return s[x / 4];
-  default:
-    return p[x / 4];
-  }
-}
-X lval fasr(lval * f, lval * p, int pz, lval * s, lval * sp, int sz, lval * c,
-	    int cz, lval * v, int vz, lval * o, int oz, lval ** rv, lval ** ro)
-{
-  lval *x, *y;
-  int i, l, j;
-  lval pc, nc;
-  y = ma0(f, oz - 2);
-  memcpy(y, o, 4 * oz);
-  for (i = 0; i < pz; i++)
-    for (pc = o2a(symi[81].sym)[4]; pc; pc = cdr(pc))
-      for (nc = o2a(car(pc))[2]; nc; nc = cdr(nc))
-	if (string_equal(car(nc), s2o(y + p[i]))) {
-	  p[i] = car(pc);
-	  break;
-	}
-  for (i = 0; i < sz; i++)
-    s[i] = is(f, p[sp[i]], s2o(y + s[i]));
-  for (i = 0; i < cz; i++)
-    c[i] = o2a(s[c[i]])[3];
-  x = ma0(f, vz - 2);
-  memcpy(x, v, 4 * vz);
-  for (i = 0; i < vz; i += ((l + 3) & ~1))
-    if (x[i + 1] & 4) {
-      l = x[i] >> 8;
-      x[i + 1] = fr(y, p, s, c, x, x[i + 1] - 4) + 4;
-      for (j = 0; j < l; j++)
-	x[i + j + 2] = fr(y, p, s, c, x, x[i + j + 2]);
-    } else {
-      l = 0;
-      x[i] = fr(y, p, s, c, x, x[i]);
-      x[i + 1] = fr(y, p, s, c, x, x[i + 1]);
-    } *rv = x;
-  *ro = y;
-}
-#endif
-#ifdef _WIN32
-lval lrp(lval * f, lval * h)
-{
-  STARTUPINFO si = {0};
-  PROCESS_INFORMATION pi = {0};
-  si.cb = sizeof(si);
-  if (CreateProcess(o2z(f[1]), o2z(f[2]), NULL, NULL, FALSE,
-		    0, NULL, NULL, &si, &pi))
-    return TRUE;
-  return 0;
-}
-#else
+/* #if 0 */
+/* lval fr(lval * o, lval * p, lval * s, lval * c, lval * b, lval x) */
+/* { */
+/*   int t; */
+/*   if (!(x & 3)) */
+/*     return x; */
+/*   t = (x >> 30) & 3; */
+/*   x &= 0x3fffffff; */
+/*   switch (t) { */
+/*   case 0: */
+/*     return sp(x) ? (lval) o + x : (lval) b + x; */
+/*   case 1: */
+/*     return c[x / 4]; */
+/*   case 2: */
+/*     return s[x / 4]; */
+/*   default: */
+/*     return p[x / 4]; */
+/*   } */
+/* } */
+
+/* lval fasr(lval * f, lval * p, int pz, lval * s, lval * sp, int sz, lval * c, */
+/* 	  int cz, lval * v, int vz, lval * o, int oz, lval ** rv, lval ** ro) { */
+/*   lval *x, *y; */
+/*   int i, l, j; */
+/*   lval pc, nc; */
+/*   y = ma0(f, oz - 2); */
+/*   memcpy(y, o, 4 * oz); */
+/*   for (i = 0; i < pz; i++) */
+/*     for (pc = o2a(symi[81].sym)[4]; pc; pc = cdr(pc)) */
+/*       for (nc = o2a(car(pc))[2]; nc; nc = cdr(nc)) */
+/* 	if (string_equal(car(nc), s2o(y + p[i]))) { */
+/* 	  p[i] = car(pc); */
+/* 	  break; */
+/* 	} */
+/*   for (i = 0; i < sz; i++) */
+/*     s[i] = is(f, p[sp[i]], s2o(y + s[i])); */
+/*   for (i = 0; i < cz; i++) */
+/*     c[i] = o2a(s[c[i]])[3]; */
+/*   x = ma0(f, vz - 2); */
+/*   memcpy(x, v, 4 * vz); */
+/*   for (i = 0; i < vz; i += ((l + 3) & ~1)) */
+/*     if (x[i + 1] & 4) { */
+/*       l = x[i] >> 8; */
+/*       x[i + 1] = fr(y, p, s, c, x, x[i + 1] - 4) + 4; */
+/*       for (j = 0; j < l; j++) */
+/* 	x[i + j + 2] = fr(y, p, s, c, x, x[i + j + 2]); */
+/*     } else { */
+/*       l = 0; */
+/*       x[i] = fr(y, p, s, c, x, x[i]); */
+/*       x[i + 1] = fr(y, p, s, c, x, x[i + 1]); */
+/*     } *rv = x; */
+/*   *ro = y; */
+/* } */
+/* #endif */
+
+/* #ifdef _WIN32 */
+/* lval lrp(lval * f, lval * h) */
+/* { */
+/*   STARTUPINFO si = {0}; */
+/*   PROCESS_INFORMATION pi = {0}; */
+/*   si.cb = sizeof(si); */
+/*   if (CreateProcess(o2z(f[1]), o2z(f[2]), NULL, NULL, FALSE, */
+/* 		    0, NULL, NULL, &si, &pi)) */
+/*     return TRUE; */
+/*   return 0; */
+/* } */
+/* #else */
 lval lrp(lval * f, lval * h) {
   pid_t p;
   int r;
@@ -1569,7 +1628,7 @@ lval lrp(lval * f, lval * h) {
     execv(o2z(f[1]), v);
   } return d2o(f, r);
 }
-#endif
+/* #endif */
 
 int main(int argc, char *argv[]) {
   lval *g;
@@ -1599,23 +1658,24 @@ int main(int argc, char *argv[]) {
   }
   kwp = make_package(g, "", "KEYWORD");
   o2a(symi[81].sym)[4] = pkgs = l2(g, kwp, pkg);
-#ifdef _WIN32
-  o2a(symi[78].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_INPUT_HANDLE), 0, 0);
-  o2a(symi[79].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_OUTPUT_HANDLE), TRUE, 0);
-  o2a(symi[80].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_ERROR_HANDLE), TRUE, 0);
-#else
+  /* #ifdef _WIN32 */
+  /*   o2a(symi[78].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_INPUT_HANDLE), 0, 0); */
+  /*   o2a(symi[79].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_OUTPUT_HANDLE), TRUE, 0); */
+  /*   o2a(symi[80].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_ERROR_HANDLE), TRUE, 0); */
+  /* #else */
   o2a(symi[78].sym)[4] = ms(g, 3, 116, 1, 0, 0, 0);
   o2a(symi[79].sym)[4] = ms(g, 3, 116, 1, 1, TRUE, 0);
   o2a(symi[80].sym)[4] = ms(g, 3, 116, 1, 2, TRUE, 0);
-#endif
+  /* #endif */
   for (i = 1; i < argc; i++)
     load(g, argv[i]);
   setjmp(top_jmp);
   do
     printf("? ");
-  while (ep(g, lread(g)));
+  while (eval_print(g, lread(g)));
   return 0;
 }
+
 struct symbol_init symi[] = {{"NIL"}, {"T"}, {"&REST"}, {"&BODY"},
 			     {"&OPTIONAL"}, {"&KEY"}, {"&WHOLE"}, {"&ENVIRONMENT"}, {"&AUX"},
 			     {"&ALLOW-OTHER-KEYS"}, {"DECLARE", eval_declare, -1}, {"SPECIAL"},
