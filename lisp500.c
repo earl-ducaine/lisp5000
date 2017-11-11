@@ -151,6 +151,18 @@ st:	t = (lval *) (v & ~3);
 	}
 }
 
+// The following two function wrap our conversion between mem pointer
+// and lisp value, these may are maynot be the same size,
+// i.e. pointers might be either 32 bits or 64bits. Lisp values are
+// always 32 bits.
+void* lval_2_pointer(lval lv) {
+  // most portable?
+  unsigned i = (unsigned) lv;
+  return (void*) i;
+    // unsigned int x = 0xFFFFFFFF;
+    // int *y = (int *)&x;
+}
+
 lval gc(lval* f) {
   int i;
   lval *m;
