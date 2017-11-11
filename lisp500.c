@@ -1372,7 +1372,7 @@ lval evca(lval* f, lval co) {
   if (cp(ex)) {
     lval fn = 8;
     if (ap(car(ex)) && (o2a(car(ex))[1] == 20)) {
-      int i = o2a(car(ex))[7] >> 3;
+      long i = o2a(car(ex))[7] >> 3;
       printf("i such that: i > 11 && i < 34 %ld\n", i);
       if (i > 11 && i < 34) {
 	return symi[i].fun(f, cdr(ex));
@@ -1418,6 +1418,7 @@ int getnws() {
   while (isspace(c));
   return c;
 }
+
 lval read_list(lval * f) {
   int c;
   NF(1) T = 0;
@@ -1433,6 +1434,7 @@ lval read_list(lval * f) {
   T = lread(g);
   return cons(g, T, read_list(g));
 }
+
 lval read_string_list(lval * g)
 {
   int c = getc(ins);
@@ -1478,19 +1480,23 @@ lval is(lval * g, lval p, lval s)
   o2a(o2a(p)[3])[2 + h] = cons(g, m, o2a(o2a(p)[3])[2 + h]);
   return m;
 }
+
 lval read_symbol(lval * g) {
   int c = getc(ins);
   if (isspace(c) || c == ')' || c == EOF) {
     if (c != EOF)
       ungetc(c, ins);
     return 0;
-  } if (c > 96 && c < 123)
-      c -= 32;
+  }
+  if (c > 96 && c < 123)
+    c -= 32;
   return cons(g, (c << 5) | 24, read_symbol(g));
 }
+
 lval list2(lval * g, int a) {
   return l2(g, symi[a].sym, lread(g));
 }
+
 lval lread(lval * g) {
   int c = getnws();
   if (c == EOF)
@@ -1510,17 +1516,20 @@ lval lread(lval * g) {
       return list2(g, 38);
   if (c == ',') {
     c = getnws();
-    if (c == '@')
+    if (c == '@') {
       return list2(g, 40);
+    }
     ungetc(c, ins);
     return list2(g, 39);
-  } ungetc(c, ins);
+  }
+  ungetc(c, ins);
   if (isdigit(c)) {
     double d;
     fscanf(ins, "%lf", &d);
     return d2o(g, d);
-  } if (c == ':')
-      getnws();
+  }
+  if (c == ':')
+    getnws();
   return is(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
 }
 
