@@ -7,23 +7,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef __MACH__
-#define setjmp(e) sigsetjmp(e, 0)
-#define longjmp siglongjmp
-#endif
-#ifdef _WIN32
-#include <windows.h>
-#define X __declspec(dllexport)
-#else
-#define X
-#endif
 
-#ifndef _WIN32
+#define X
+
 #include <sys/time.h>
 #include <unistd.h>
 #include <dlfcn.h>
 #include <sys/utsname.h>
-#endif
+
 
 typedef int lval;
 lval *o2c(lval o) {
