@@ -150,58 +150,60 @@ st:	t = (lval *) (v & ~3);
 		}
 	}
 }
-lval gc(lval * f)
-{
-	int i;
-	lval *m;
-	int l;
-	int u = 0;
-	int ml;
-	printf(";garbage collecting...\n");
-	while (memf) {
-		lval *n = (lval *) memf[0];
-		memset(memf, 0, 4 * memf[1]);
-		memf = (lval *) n;
-	}
-	gcm(xvalues);
-	gcm(pkgs);
-	gcm(dyns);
-	for (; f > stack; f--) {
-		if ((*f & 3) && (*f < memory || *f > memory + memory_size / 4))
-			printf("%x\n", *f);
-		gcm(*f);
-	}
-	memf = 0;
-	m = memory;
-	i = 0;
-	while (m < memory + memory_size / 4) {
-		l = ((m[1] & 4 ? m[0] >> 8 : 0) + 1) & ~1;
-		if (m[0] & 4) {
-			if (u) {
-				m[-ml] = (lval) memf;
-				m[1 - ml] = ml;
-				memf = m - ml;
-				u = 0;
-				i += ml;
-			}
-		} else {
-			if (!u)
-				ml = 0;
-			ml += l + 2;
-			u = 1;
-		}
-		m[0] &= ~4;
-		m += l + 2;
-	}
-	if (u) {
-		m[-ml] = (lval) memf;
-		m[1 - ml] = ml;
-		memf = m - ml;
-		i += ml;
-	}
-	printf(";done. %d free.\n", i);
-	return 0;
+
+lval gc(lval* f) {
+  int i;
+  lval *m;
+  int l;
+  int u = 0;
+  int ml;
+  printf(";garbage collecting...\n");
+  while (memf) {
+    lval *n = (lval *) memf[0];
+    memset(memf, 0, 4 * memf[1]);
+    memf = (lval *) n;
+  }
+  gcm(xvalues);
+  gcm(pkgs);
+  gcm(dyns);
+  for (; f > stack; f--) {
+    if ((*f & 3) && (*f < memory || *f > memory + memory_size / 4)) {
+      printf("%x\n", *f);
+    }
+    gcm(*f);
+  }
+  memf = 0;
+  m = memory;
+  i = 0;
+  while (m < memory + memory_size / 4) {
+    l = ((m[1] & 4 ? m[0] >> 8 : 0) + 1) & ~1;
+    if (m[0] & 4) {
+      if (u) {
+	m[-ml] = (lval) memf;
+	m[1 - ml] = ml;
+	memf = m - ml;
+	u = 0;
+	i += ml;
+      }
+    } else {
+      if (!u)
+	ml = 0;
+      ml += l + 2;
+      u = 1;
+    }
+    m[0] &= ~4;
+    m += l + 2;
+  }
+  if (u) {
+    m[-ml] = (lval) memf;
+    m[1 - ml] = ml;
+    memf = m - ml;
+    i += ml;
+  }
+  printf(";done. %d free.\n", i);
+  return 0;
 }
+
 lval *m0(lval * g, int n)
 {
 	lval *m = memf;
