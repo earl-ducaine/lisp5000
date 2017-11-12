@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <sys/utsname.h>
+#include <stdbool.h>
 
 #include "defs.h"
 
@@ -21,20 +22,35 @@ lval lread(lval*);
 lval evca(lval *, lval);
 int dbgr(lval *, int, lval, lval *);
 
+lval* memory;
+lval* memf;
+int memory_size;
+lval* stack;
+lval xvalues = 8;
+lval dyns = 0;
+jmp_buf top_jmp;
+lval pkg;
+lval pkgs;
+lval kwp = 0;
+
 extern struct symbol_init symi[];
 
-lval *o2c(lval o) {
+// object to cons
+lval* o2c(lval o) {
 	return (lval *) (o - 1);
 }
 
-lval c2o(lval * c) {
+// cons to object
+lval c2o(lval* c) {
   return (lval) c + 1;
 }
 
+// consp
 cint_platform cp(lval o) {
   return (o & 3) == 1;
 }
 
+// object to
 lval* o2a(lval o) {
   return (lval *) (o - 2);
 }
@@ -43,7 +59,7 @@ lval a2o(lval * a) {
   return (lval) a + 2;
 }
 
-cint_platform ap(lval o) {
+unsigned ap(lval o) {
   return (o & 3) == 2;
 }
 
@@ -123,16 +139,7 @@ lval *binding(lval * f, lval sym, int type, int *macro) {
   }
   return o2a(sym) + 4 + type;
 }
-lval *memory;
-lval *memf;
-int memory_size;
-lval *stack;
-lval xvalues = 8;
-lval dyns = 0;
-jmp_buf top_jmp;
-lval pkg;
-lval pkgs;
-lval kwp = 0;
+
 void gcm(lval v) {
   lval *t;
   int i;
@@ -1030,57 +1037,6 @@ lval ljref(lval * f) {
 lval setfjref(lval * f) {
 	return o2s(f[2])[o2u(f[3])] = o2u(f[1]);
 }
-#ifdef _WIN32
-lval lmake_fs(lval * f) {
-	HANDLE fd = CreateFile(o2z(f[1]), f[2] ? GENERIC_WRITE :
-			       GENERIC_READ, f[2] ? FILE_SHARE_WRITE : FILE_SHARE_READ, NULL, OPEN_EXISTING,
-			       FILE_ATTRIBUTE_NORMAL, NULL);
-	return ms(f, 4, 116, 1, fd, f[2], 0);
-}
-lval lclose_fs(lval * f) {
-	CloseHandle(o2s(f[1])[3]);
-	return 0;
-}
-lval llisten_fs(lval * f)
-{
-	return WaitForSingleObject(o2s(f[1])[3], 0) == WAIT_OBJECT_0 ? TRUE : 0;
-}
-lval lread_fs(lval * f) {
-	int l = o2i(f[3]);
-	if (!ReadFile(o2s(f[1])[3],
-		      o2z(f[2]) + l, (o2s(f[2])[0] >> 6) - 4 - l, &l, NULL))
-		return 0;
-	return d2o(f, l);
-}
-lval lwrite_fs(lval * f) {
-	int l = o2i(f[3]);
-	if (!WriteFile(o2s(f[1])[3],
-		       o2z(f[2]) + l, o2i(f[4]) - l, &l, NULL))
-		return 0;
-	return d2o(f, l);
-}
-lval lfinish_fs(lval * f) {
-	FlushFileBuffers(o2s(f[1])[3]);
-	return 0;
-}
-lval lfasl(lval * f) {
-	HMODULE h;
-	FARPROC s;
-	h = LoadLibrary(o2z(f[1]));
-	s = GetProcAddress(h, "init");
-	return s(f);
-}
-lval luname(lval * f)
-{
-	OSVERSIONINFO osvi;
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&osvi);
-	f[1] = cons(f + 1, strf(f + 1, osvi.szCSDVersion), 0);
-	f[1] = cons(f + 1, d2o(f + 1, osvi.dwBuildNumber), f[1]);
-	f[1] = cons(f + 1, d2o(f + 1, osvi.dwMinorVersion), f[1]);
-	return cons(f + 1, d2o(f, osvi.dwMajorVersion), f[1]);
-}
-#else
 
 lval lmake_fs(lval * f) {
 	int fd = open(o2z(f[1]), f[2] ? O_WRONLY | O_CREAT | O_TRUNC : O_RDONLY, 0600);
@@ -1138,7 +1094,6 @@ lval luname(lval* f) {
 	return cons(f + 1, strf(f, un.sysname), f[1]);
 }
 
-#endif
 FILE *ins;
 void load(lval * f, char *s) {
 	lval r;
@@ -1511,60 +1466,6 @@ lval mkp(lval * f, const char *s0, const char *s1) {
 	    l2(f, strf(f, s0), strf(f, s1)), mkv(f), mkv(f), 0, 0, 0);
 }
 
-#if 0
-
-lval fr(lval * o, lval * p, lval * s, lval * c, lval * b, lval x) {
-	int t;
-	if (!(x & 3))
-		return x;
-	t = (x >> 30) & 3;
-	x &= 0x3fffffff;
-	switch (t) {
-	case 0:
-		return sp(x) ? (lval) o + x : (lval) b + x;
-	case 1:
-		return c[x / 4];
-	case 2:
-		return s[x / 4];
-	default:
-		return p[x / 4];
-	}
-}
-
-lval fasr(lval * f, lval * p, int pz, lval * s, lval * sp, int sz, lval * c,
-         int cz, lval * v, int vz, lval * o, int oz, lval ** rv, lval ** ro) {
-	lval *x, *y;
-	int i, l, j;
-	lval pc, nc;
-	y = ma0(f, oz - 2);
-	memcpy(y, o, 4 * oz);
-	for (i = 0; i < pz; i++)
-		for (pc = o2a(symi[81].sym)[4]; pc; pc = cdr(pc))
-			for (nc = o2a(car(pc))[2]; nc; nc = cdr(nc))
-				if (string_equal(car(nc), s2o(y + p[i]))) {
-					p[i] = car(pc);
-					break;
-				}
-	for (i = 0; i < sz; i++)
-		s[i] = is(f, p[sp[i]], s2o(y + s[i]));
-	for (i = 0; i < cz; i++)
-		c[i] = o2a(s[c[i]])[3];
-	x = ma0(f, vz - 2);
-	memcpy(x, v, 4 * vz);
-	for (i = 0; i < vz; i += ((l + 3) & ~1))
-		if (x[i + 1] & 4) {
-			l = x[i] >> 8;
-			x[i + 1] = fr(y, p, s, c, x, x[i + 1] - 4) + 4;
-			for (j = 0; j < l; j++)
-				x[i + j + 2] = fr(y, p, s, c, x, x[i + j + 2]);
-		} else {
-			l = 0;
-			x[i] = fr(y, p, s, c, x, x[i]);
-			x[i + 1] = fr(y, p, s, c, x, x[i + 1]);
-		} *rv = x;
-	*ro = y;
-}
-#endif
 lval lrp(lval * f, lval * h) {
 	pid_t p;
 	int r;
