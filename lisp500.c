@@ -16,14 +16,13 @@
 #include <dlfcn.h>
 #include <sys/utsname.h>
 
-// typedef uint32_t lval;
-typedef int32_t lval;
-
-// a type coordinated with lval to be the same size that holds pure c
-// values only. (Not always clear what 'pure c values' means.
-typedef lval cint_platform;
+#include "defs.h"
 
 lval strf(lval * f, const char *s);
+
+extern struct symbol_init symi[];
+
+
 
 lval *o2c(lval o) {
 	return (lval *) (o - 1);
@@ -64,17 +63,6 @@ lval s2o(lval * s) {
 cint_platform sp(lval o) {
   return (o & 3) == 3;
 }
-
-struct symbol_init {
-  const char *name;
-  lval(*fun) ();
-  cint_platform argc;
-  lval(*setfun) ();
-  cint_platform setargc;
-  lval sym;
-};
-
-extern struct symbol_init symi[];
 #define TRUE symi[1].sym
 #define T g[-2]
 #define U g[-3]
