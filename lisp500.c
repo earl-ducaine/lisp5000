@@ -270,7 +270,8 @@ st:	m = m0(g, (n + 95) / 32);
 	if (!m) {
 		gc(g);
 		goto st;
-	} *m = (n + 31) << 3;
+	}
+	*m = (n + 31) << 3;
 	return m;
 }
 
@@ -454,13 +455,14 @@ st:	t = 0;
 		goto st;
 	} return *h;
 }
-lval eval_body(lval * f, lval ex)
-{
+
+lval eval_body(lval * f, lval ex) {
 	NF(1) T = 0;
 	for (; ex; ex = cdr(ex))
 		T = evca(g, ex);
 	return T;
 }
+
 int map_eval(lval * f, lval ex) {
 	lval *g = f + 3;
 	for (; ex; ex = cdr(ex), g++) {
@@ -469,21 +471,23 @@ int map_eval(lval * f, lval ex) {
 		g[-1] = evca(g, ex);
 	} return g - f - 3;
 }
+
 lval eval(lval * f, lval expr) {
 	NF(1) T = 0;
 	T = cons(g, expr, 0);
 	return evca(g, T);
 }
-lval rvalues(lval * g, lval v)
-{
+
+lval rvalues(lval * g, lval v) {
 	return xvalues == 8 ? cons(g, v, 0) : xvalues;
 }
+
 lval mvalues(lval a) {
 	xvalues = a;
 	return car(a);
 }
-lval infn(lval * f, lval * h)
-{
+
+lval infn(lval * f, lval * h) {
 	jmp_buf jmp;
 	lval vs;
 	lval *g = h + 1;
@@ -498,8 +502,8 @@ lval infn(lval * f, lval * h)
 		return eval_body(g, o2a(fn)[5]);
 	return mvalues(car(vs));
 }
-X lval call(lval * f, lval fn, unsigned d)
-{
+
+lval call(lval * f, lval fn, unsigned d) {
 	lval *g = f + d + 3;
 	xvalues = 8;
 	if (o2a(fn)[1] == 20)
@@ -514,11 +518,12 @@ X lval call(lval * f, lval fn, unsigned d)
 		dbgr(g, 6, 0, f);
 	return ((lval(*) ()) o2s(fn)[2]) (f, f + d + 1);
 }
+
 lval eval_quote(lval * g, lval ex) {
 	return car(ex);
 }
-int specp(lval * f, lval ex, lval s)
-{
+
+int specp(lval * f, lval ex, lval s) {
 	for (; ex; ex = cdr(ex))
 		if (ap(caar(ex)) && o2a(caar(ex))[7] == 3 << 3) {
 			lval e = cdar(ex);
@@ -1076,16 +1081,18 @@ lval luname(lval * f)
 	return cons(f + 1, d2o(f, osvi.dwMajorVersion), f[1]);
 }
 #else
+
 lval lmake_fs(lval * f) {
 	int fd = open(o2z(f[1]), f[2] ? O_WRONLY | O_CREAT | O_TRUNC : O_RDONLY, 0600);
 	return fd >= 0 ? ms(f, 4, 116, 1, fd, f[2], 0) : d2o(f, errno);
 }
+
 lval lclose_fs(lval * f) {
 	close(o2s(f[1])[3]);
 	return 0;
 }
-lval llisten_fs(lval * f)
-{
+
+lval llisten_fs(lval * f) {
 	fd_set r;
 	struct timeval t;
 	t.tv_sec = 0;
@@ -1094,22 +1101,26 @@ lval llisten_fs(lval * f)
 	FD_SET(o2s(f[1])[3], &r);
 	return select(o2s(f[1])[3] + 1, &r, NULL, NULL, &t) ? TRUE : 0;
 }
+
 lval lread_fs(lval * f) {
 	int l = o2i(f[3]);
 	l = read(o2s(f[1])[3], o2z(f[2]) + l,
 		 (o2s(f[2])[0] >> 6) - 4 - l);
 	return l < 0 ? cons(f, errno, 0) : d2o(f, l);
 }
+
 lval lwrite_fs(lval * f) {
 	int l = o2i(f[3]);
 	l = write(o2s(f[1])[3],
 		  o2z(f[2]) + l, o2i(f[4]) - l);
 	return l < 0 ? cons(f, errno, 0) : d2o(f, l);
 }
+
 lval lfinish_fs(lval * f) {
 	fsync(o2s(f[1])[3]);
 	return 0;
 }
+
 lval lfasl(lval * f) {
 	void *h;
 	lval(*s) ();
