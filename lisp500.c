@@ -13,25 +13,44 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <sys/utsname.h>
+#include <stdbool.h>
 
 #include "defs.h"
 
 lval strf(lval * f, const char *s);
+lval lread(lval*);
+lval evca(lval *, lval);
+int dbgr(lval *, int, lval, lval *);
+
+lval* memory;
+lval* memf;
+int memory_size;
+lval* stack;
+lval xvalues = 8;
+lval dyns = 0;
+jmp_buf top_jmp;
+lval pkg;
+lval pkgs;
+lval kwp = 0;
 
 extern struct symbol_init symi[];
 
-lval *o2c(lval o) {
+// object to cons
+lval* o2c(lval o) {
 	return (lval *) (o - 1);
 }
 
-lval c2o(lval * c) {
+// cons to object
+lval c2o(lval* c) {
   return (lval) c + 1;
 }
 
+// consp
 cint_platform cp(lval o) {
   return (o & 3) == 1;
 }
 
+// object to
 lval* o2a(lval o) {
   return (lval *) (o - 2);
 }
@@ -40,7 +59,7 @@ lval a2o(lval * a) {
   return (lval) a + 2;
 }
 
-cint_platform ap(lval o) {
+unsigned ap(lval o) {
   return (o & 3) == 2;
 }
 
@@ -81,19 +100,13 @@ lval caar(lval c) {
   return car(car(c));
 }
 
-lval lread(lval *);
-
 lval cdar(lval c) {
   return cdr(car(c));
 }
 
-lval evca(lval *, lval);
-
 lval cadr(lval c) {
   return car(cdr(c));
 }
-
-int dbgr(lval *, int, lval, lval *);
 
 lval cddr(lval c) {
   return cdr(cdr(c));
@@ -126,16 +139,7 @@ lval *binding(lval * f, lval sym, int type, int *macro) {
   }
   return o2a(sym) + 4 + type;
 }
-lval *memory;
-lval *memf;
-int memory_size;
-lval *stack;
-lval xvalues = 8;
-lval dyns = 0;
-jmp_buf top_jmp;
-lval pkg;
-lval pkgs;
-lval kwp = 0;
+
 void gcm(lval v) {
   lval *t;
   int i;
@@ -225,23 +229,26 @@ lval gc(lval* f) {
 }
 
 lval *m0(lval * g, int n) {
-	lval *m = memf;
-	lval *p = 0;
-	n = (n + 1) & ~1;
-	for (; m; m = (lval *) m[0]) {
-		if (n <= m[1]) {
-			if (m[1] == n)
-				if (p)
-					p[0] = m[0];
-				else
-					memf = (lval *) m[0];
-			else {
-				m[1] -= n;
-				m += m[1];
-			}
-			return m;
-		} p = m;
-	} return 0;
+  lval *m = memf;
+  lval *p = 0;
+  n = (n + 1) & ~1;
+  for (; m; m = (lval *) m[0]) {
+    if (n <= m[1]) {
+      if (m[1] == n) {
+	if (p) {
+	  p[0] = m[0];
+	} else {
+	  memf = (lval *) m[0];
+	}
+      } else {
+	m[1] -= n;
+	m += m[1];
+      }
+      return m;
+    }
+    p = m;
+  }
+  return 0;
 }
 
 lval *ma0(lval * g, int n) {
@@ -270,7 +277,8 @@ st:	m = m0(g, (n + 95) / 32);
 	if (!m) {
 		gc(g);
 		goto st;
-	} *m = (n + 31) << 3;
+	}
+	*m = (n + 31) << 3;
 	return m;
 }
 
@@ -454,13 +462,14 @@ st:	t = 0;
 		goto st;
 	} return *h;
 }
-lval eval_body(lval * f, lval ex)
-{
+
+lval eval_body(lval * f, lval ex) {
 	NF(1) T = 0;
 	for (; ex; ex = cdr(ex))
 		T = evca(g, ex);
 	return T;
 }
+
 int map_eval(lval * f, lval ex) {
 	lval *g = f + 3;
 	for (; ex; ex = cdr(ex), g++) {
@@ -469,21 +478,23 @@ int map_eval(lval * f, lval ex) {
 		g[-1] = evca(g, ex);
 	} return g - f - 3;
 }
+
 lval eval(lval * f, lval expr) {
 	NF(1) T = 0;
 	T = cons(g, expr, 0);
 	return evca(g, T);
 }
-lval rvalues(lval * g, lval v)
-{
+
+lval rvalues(lval * g, lval v) {
 	return xvalues == 8 ? cons(g, v, 0) : xvalues;
 }
+
 lval mvalues(lval a) {
 	xvalues = a;
 	return car(a);
 }
-lval infn(lval * f, lval * h)
-{
+
+lval infn(lval * f, lval * h) {
 	jmp_buf jmp;
 	lval vs;
 	lval *g = h + 1;
@@ -498,8 +509,8 @@ lval infn(lval * f, lval * h)
 		return eval_body(g, o2a(fn)[5]);
 	return mvalues(car(vs));
 }
-X lval call(lval * f, lval fn, unsigned d)
-{
+
+lval call(lval * f, lval fn, unsigned d) {
 	lval *g = f + d + 3;
 	xvalues = 8;
 	if (o2a(fn)[1] == 20)
@@ -514,11 +525,12 @@ X lval call(lval * f, lval fn, unsigned d)
 		dbgr(g, 6, 0, f);
 	return ((lval(*) ()) o2s(fn)[2]) (f, f + d + 1);
 }
+
 lval eval_quote(lval * g, lval ex) {
 	return car(ex);
 }
-int specp(lval * f, lval ex, lval s)
-{
+
+int specp(lval * f, lval ex, lval s) {
 	for (; ex; ex = cdr(ex))
 		if (ap(caar(ex)) && o2a(caar(ex))[7] == 3 << 3) {
 			lval e = cdar(ex);
@@ -1025,67 +1037,18 @@ lval ljref(lval * f) {
 lval setfjref(lval * f) {
 	return o2s(f[2])[o2u(f[3])] = o2u(f[1]);
 }
-#ifdef _WIN32
-lval lmake_fs(lval * f) {
-	HANDLE fd = CreateFile(o2z(f[1]), f[2] ? GENERIC_WRITE :
-			       GENERIC_READ, f[2] ? FILE_SHARE_WRITE : FILE_SHARE_READ, NULL, OPEN_EXISTING,
-			       FILE_ATTRIBUTE_NORMAL, NULL);
-	return ms(f, 4, 116, 1, fd, f[2], 0);
-}
-lval lclose_fs(lval * f) {
-	CloseHandle(o2s(f[1])[3]);
-	return 0;
-}
-lval llisten_fs(lval * f)
-{
-	return WaitForSingleObject(o2s(f[1])[3], 0) == WAIT_OBJECT_0 ? TRUE : 0;
-}
-lval lread_fs(lval * f) {
-	int l = o2i(f[3]);
-	if (!ReadFile(o2s(f[1])[3],
-		      o2z(f[2]) + l, (o2s(f[2])[0] >> 6) - 4 - l, &l, NULL))
-		return 0;
-	return d2o(f, l);
-}
-lval lwrite_fs(lval * f) {
-	int l = o2i(f[3]);
-	if (!WriteFile(o2s(f[1])[3],
-		       o2z(f[2]) + l, o2i(f[4]) - l, &l, NULL))
-		return 0;
-	return d2o(f, l);
-}
-lval lfinish_fs(lval * f) {
-	FlushFileBuffers(o2s(f[1])[3]);
-	return 0;
-}
-lval lfasl(lval * f) {
-	HMODULE h;
-	FARPROC s;
-	h = LoadLibrary(o2z(f[1]));
-	s = GetProcAddress(h, "init");
-	return s(f);
-}
-lval luname(lval * f)
-{
-	OSVERSIONINFO osvi;
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&osvi);
-	f[1] = cons(f + 1, strf(f + 1, osvi.szCSDVersion), 0);
-	f[1] = cons(f + 1, d2o(f + 1, osvi.dwBuildNumber), f[1]);
-	f[1] = cons(f + 1, d2o(f + 1, osvi.dwMinorVersion), f[1]);
-	return cons(f + 1, d2o(f, osvi.dwMajorVersion), f[1]);
-}
-#else
+
 lval lmake_fs(lval * f) {
 	int fd = open(o2z(f[1]), f[2] ? O_WRONLY | O_CREAT | O_TRUNC : O_RDONLY, 0600);
 	return fd >= 0 ? ms(f, 4, 116, 1, fd, f[2], 0) : d2o(f, errno);
 }
+
 lval lclose_fs(lval * f) {
 	close(o2s(f[1])[3]);
 	return 0;
 }
-lval llisten_fs(lval * f)
-{
+
+lval llisten_fs(lval * f) {
 	fd_set r;
 	struct timeval t;
 	t.tv_sec = 0;
@@ -1094,22 +1057,26 @@ lval llisten_fs(lval * f)
 	FD_SET(o2s(f[1])[3], &r);
 	return select(o2s(f[1])[3] + 1, &r, NULL, NULL, &t) ? TRUE : 0;
 }
+
 lval lread_fs(lval * f) {
 	int l = o2i(f[3]);
 	l = read(o2s(f[1])[3], o2z(f[2]) + l,
 		 (o2s(f[2])[0] >> 6) - 4 - l);
 	return l < 0 ? cons(f, errno, 0) : d2o(f, l);
 }
+
 lval lwrite_fs(lval * f) {
 	int l = o2i(f[3]);
 	l = write(o2s(f[1])[3],
 		  o2z(f[2]) + l, o2i(f[4]) - l);
 	return l < 0 ? cons(f, errno, 0) : d2o(f, l);
 }
+
 lval lfinish_fs(lval * f) {
 	fsync(o2s(f[1])[3]);
 	return 0;
 }
+
 lval lfasl(lval * f) {
 	void *h;
 	lval(*s) ();
@@ -1127,7 +1094,6 @@ lval luname(lval* f) {
 	return cons(f + 1, strf(f, un.sysname), f[1]);
 }
 
-#endif
 FILE *ins;
 void load(lval * f, char *s) {
 	lval r;
@@ -1384,181 +1350,122 @@ lval read_list(lval * f) {
 	T = lread(g);
 	return cons(g, T, read_list(g));
 }
-lval read_string_list(lval * g)
-{
-	int c = getc(ins);
-	if (c == '\"')
-		return 0;
-	if (c == '\\')
-		c = getc(ins);
-	return cons(g, (c << 5) | 24, read_string_list(g));
+
+lval read_string_list(lval * g) {
+  int c = getc(ins);
+  if (c == '\"')
+    return 0;
+  if (c == '\\')
+    c = getc(ins);
+  return cons(g, (c << 5) | 24, read_string_list(g));
 }
+
 unsigned hash(lval s) {
-	unsigned char *z = o2z(s);
-	unsigned i = 0, h = 0, g;
-	while (i < o2s(s)[0] / 64 - 4) {
-		h = (h << 4) + z[i++];
-		g = h & 0xf0000000;
-		if (g)
-			h = h ^ (g >> 24) ^ g;
-	}
-	return h;
-} lval lhash(lval * f) {
-	return d2o(f, hash(f[1]));
+  unsigned char *z = o2z(s);
+  unsigned i = 0, h = 0, g;
+  while (i < o2s(s)[0] / 64 - 4) {
+    h = (h << 4) + z[i++];
+    g = h & 0xf0000000;
+    if (g)
+      h = h ^ (g >> 24) ^ g;
+  }
+  return h;
 }
-lval is(lval * g, lval p, lval s)
-{
-	int h = hash(s) % 1021;
-	int i = 3;
-	lval m;
-	for (; i < 5; i++) {
-		m = o2a(o2a(p)[i])[2 + h];
-		for (; m; m = cdr(m)) {
-			lval y = car(m);
-			if (string_equal(o2a(y)[2], s))
-				return o2a(y)[7] ? y : 0;
-		}
-	}
-	m = ma(g, 9, 20, s, 0, 8, 8, 8, -8, 16, p, 0);
-	if (p == kwp)
-		o2a(m)[4] = m;
-	o2a(o2a(p)[3])[2 + h] = cons(g, m, o2a(o2a(p)[3])[2 + h]);
-	return m;
+
+lval lhash(lval * f) {
+  return d2o(f, hash(f[1]));
 }
+
+lval is(lval * g, lval p, lval s) {
+  int h = hash(s) % 1021;
+  int i = 3;
+  lval m;
+  for (; i < 5; i++) {
+    m = o2a(o2a(p)[i])[2 + h];
+    for (; m; m = cdr(m)) {
+      lval y = car(m);
+      if (string_equal(o2a(y)[2], s))
+	return o2a(y)[7] ? y : 0;
+    }
+  }
+  m = ma(g, 9, 20, s, 0, 8, 8, 8, -8, 16, p, 0);
+  if (p == kwp)
+    o2a(m)[4] = m;
+  o2a(o2a(p)[3])[2 + h] = cons(g, m, o2a(o2a(p)[3])[2 + h]);
+  return m;
+}
+
 lval read_symbol(lval * g) {
-	int c = getc(ins);
-	if (isspace(c) || c == ')' || c == EOF) {
-		if (c != EOF)
-			ungetc(c, ins);
-		return 0;
-	} if (c > 96 && c < 123)
-		c -= 32;
-	return cons(g, (c << 5) | 24, read_symbol(g));
+  int c = getc(ins);
+  if (isspace(c) || c == ')' || c == EOF) {
+    if (c != EOF)
+      ungetc(c, ins);
+    return 0;
+  } if (c > 96 && c < 123)
+      c -= 32;
+  return cons(g, (c << 5) | 24, read_symbol(g));
 }
+
 lval list2(lval * g, int a) {
-	return l2(g, symi[a].sym, lread(g));
+  return l2(g, symi[a].sym, lread(g));
 }
+
 lval lread(lval * g) {
-	int c = getnws();
-	if (c == EOF)
-		return 8;
-	if (c == '(')
-		return read_list(g);
-	if (c == '\"')
-		return stringify(g, read_string_list(g));
-	if (c == '\'')
-		return list2(g, 12);
-	if (c == '#') {
-		c = getnws();
-		if (c == '\'')
-			return list2(g, 20);
-		return 0;
-	} if (c == '`')
-		return list2(g, 38);
-	if (c == ',') {
-		c = getnws();
-		if (c == '@')
-			return list2(g, 40);
-		ungetc(c, ins);
-		return list2(g, 39);
-	} ungetc(c, ins);
-	if (isdigit(c)) {
-		double d;
-		fscanf(ins, "%lf", &d);
-		return d2o(g, d);
-	} if (c == ':')
-		getnws();
-	return is(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
+  int c = getnws();
+  if (c == EOF)
+    return 8;
+  if (c == '(')
+    return read_list(g);
+  if (c == '\"')
+    return stringify(g, read_string_list(g));
+  if (c == '\'')
+    return list2(g, 12);
+  if (c == '#') {
+    c = getnws();
+    if (c == '\'')
+      return list2(g, 20);
+    return 0;
+  } if (c == '`')
+      return list2(g, 38);
+  if (c == ',') {
+    c = getnws();
+    if (c == '@')
+      return list2(g, 40);
+    ungetc(c, ins);
+    return list2(g, 39);
+  } ungetc(c, ins);
+  if (isdigit(c)) {
+    double d;
+    fscanf(ins, "%lf", &d);
+    return d2o(g, d);
+  } if (c == ':')
+      getnws();
+  return is(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
 }
 
 lval strf(lval * f, const char *s) {
-	int j = strlen(s);
-	lval *str = ms0(f, j);
-	str[1] = 20;
-	for (j++; j; j--)
-		((char *) str)[7 + j] = s[j - 1];
-	return s2o(str);
+  int j = strlen(s);
+  lval *str = ms0(f, j);
+  str[1] = 20;
+  for (j++; j; j--)
+    ((char *) str)[7 + j] = s[j - 1];
+  return s2o(str);
 }
 
 lval mkv(lval * f) {
-	int i = 2;
-	lval *r = ma0(f, 1021);
-	r[1] = 116;
-	while (i < 1023)
-		r[i++] = 0;
-	return a2o(r);
+  int i = 2;
+  lval *r = ma0(f, 1021);
+  r[1] = 116;
+  while (i < 1023)
+    r[i++] = 0;
+  return a2o(r);
 }
-lval mkp(lval * f, const char *s0, const char *s1)
-{
-	return ma(f, 6, 180,
-		  l2(f, strf(f, s0), strf(f, s1)), mkv(f), mkv(f), 0, 0, 0);
+
+lval mkp(lval * f, const char *s0, const char *s1) {
+  return ma(f, 6, 180,
+	    l2(f, strf(f, s0), strf(f, s1)), mkv(f), mkv(f), 0, 0, 0);
 }
-#if 0
-lval fr(lval * o, lval * p, lval * s, lval * c, lval * b, lval x)
-{
-	int t;
-	if (!(x & 3))
-		return x;
-	t = (x >> 30) & 3;
-	x &= 0x3fffffff;
-	switch (t) {
-	case 0:
-		return sp(x) ? (lval) o + x : (lval) b + x;
-	case 1:
-		return c[x / 4];
-	case 2:
-		return s[x / 4];
-	default:
-		return p[x / 4];
-	}
-}
-X lval fasr(lval * f, lval * p, int pz, lval * s, lval * sp, int sz, lval * c,
-         int cz, lval * v, int vz, lval * o, int oz, lval ** rv, lval ** ro)
-{
-	lval *x, *y;
-	int i, l, j;
-	lval pc, nc;
-	y = ma0(f, oz - 2);
-	memcpy(y, o, 4 * oz);
-	for (i = 0; i < pz; i++)
-		for (pc = o2a(symi[81].sym)[4]; pc; pc = cdr(pc))
-			for (nc = o2a(car(pc))[2]; nc; nc = cdr(nc))
-				if (string_equal(car(nc), s2o(y + p[i]))) {
-					p[i] = car(pc);
-					break;
-				}
-	for (i = 0; i < sz; i++)
-		s[i] = is(f, p[sp[i]], s2o(y + s[i]));
-	for (i = 0; i < cz; i++)
-		c[i] = o2a(s[c[i]])[3];
-	x = ma0(f, vz - 2);
-	memcpy(x, v, 4 * vz);
-	for (i = 0; i < vz; i += ((l + 3) & ~1))
-		if (x[i + 1] & 4) {
-			l = x[i] >> 8;
-			x[i + 1] = fr(y, p, s, c, x, x[i + 1] - 4) + 4;
-			for (j = 0; j < l; j++)
-				x[i + j + 2] = fr(y, p, s, c, x, x[i + j + 2]);
-		} else {
-			l = 0;
-			x[i] = fr(y, p, s, c, x, x[i]);
-			x[i + 1] = fr(y, p, s, c, x, x[i + 1]);
-		} *rv = x;
-	*ro = y;
-}
-#endif
-#ifdef _WIN32
-lval lrp(lval * f, lval * h)
-{
-	STARTUPINFO si = {0};
-	PROCESS_INFORMATION pi = {0};
-	si.cb = sizeof(si);
-	if (CreateProcess(o2z(f[1]), o2z(f[2]), NULL, NULL, FALSE,
-			  0, NULL, NULL, &si, &pi))
-		return TRUE;
-	return 0;
-}
-#else
+
 lval lrp(lval * f, lval * h) {
 	pid_t p;
 	int r;
@@ -1574,53 +1481,50 @@ lval lrp(lval * f, lval * h) {
 		execv(o2z(f[1]), v);
 	} return d2o(f, r);
 }
-#endif
-int main(int argc, char *argv[])
-{
-	lval *g;
-	int i;
-	lval sym;
-	memory_size = 4 * 2048 * 1024;
-	memory = malloc(memory_size);
-	memf = memory;
-	memset(memory, 0, memory_size);
-	memf[0] = 0;
-	memf[1] = memory_size / 4;
-	stack = malloc(256 * 1024);
-	memset(stack, 0, 256 * 1024);
-	g = stack + 5;
-	pkg = mkp(g, "CL", "COMMON-LISP");
-	for (i = 0; i < 88; i++) {
-		sym = is(g, pkg, strf(g, symi[i].name));
-		if (i < 10)
-			o2a(sym)[4] = sym;
-		ins = stdin;
-		symi[i].sym = sym;
-		if (symi[i].fun)
-			o2a(sym)[5] = ma(g, 5, 212, ms(g, 3, 212, symi[i].fun, 0, -1), 0, 0, 0, sym);
-		if (symi[i].setfun)
-			o2a(sym)[6] = ma(g, 5, 212, ms(g, 3, 212, symi[i].setfun, 0, -1), 8, 0, 0, sym);
-		o2a(sym)[7] = i << 3;
-	}
-	kwp = mkp(g, "", "KEYWORD");
-	o2a(symi[81].sym)[4] = pkgs = l2(g, kwp, pkg);
-#ifdef _WIN32
-	o2a(symi[78].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_INPUT_HANDLE), 0, 0);
-	o2a(symi[79].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_OUTPUT_HANDLE), TRUE, 0);
-	o2a(symi[80].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_ERROR_HANDLE), TRUE, 0);
-#else
-	o2a(symi[78].sym)[4] = ms(g, 3, 116, 1, 0, 0, 0);
-	o2a(symi[79].sym)[4] = ms(g, 3, 116, 1, 1, TRUE, 0);
-	o2a(symi[80].sym)[4] = ms(g, 3, 116, 1, 2, TRUE, 0);
-#endif
-	for (i = 1; i < argc; i++)
-		load(g, argv[i]);
-	setjmp(top_jmp);
-	do
-		printf("? ");
-	while (ep(g, lread(g)));
-	return 0;
+
+int main(int argc, char *argv[]) {
+  lval *g;
+  int i;
+  lval sym;
+  memory_size = 4 * 2048 * 1024;
+  memory = malloc(memory_size);
+  memf = memory;
+  memset(memory, 0, memory_size);
+  memf[0] = 0;
+  memf[1] = memory_size / 4;
+  stack = malloc(256 * 1024);
+  memset(stack, 0, 256 * 1024);
+  g = stack + 5;
+  pkg = mkp(g, "CL", "COMMON-LISP");
+  for (i = 0; i < 88; i++) {
+    sym = is(g, pkg, strf(g, symi[i].name));
+    if (i < 10) {
+      o2a(sym)[4] = sym;
+    }
+    ins = stdin;
+    symi[i].sym = sym;
+    if (symi[i].fun) {
+      o2a(sym)[5] = ma(g, 5, 212, ms(g, 3, 212, symi[i].fun, 0, -1), 0, 0, 0, sym);
+    }
+    if (symi[i].setfun)
+      o2a(sym)[6] = ma(g, 5, 212, ms(g, 3, 212, symi[i].setfun, 0, -1), 8, 0, 0, sym);
+    o2a(sym)[7] = i << 3;
+  }
+  kwp = mkp(g, "", "KEYWORD");
+  o2a(symi[81].sym)[4] = pkgs = l2(g, kwp, pkg);
+  o2a(symi[78].sym)[4] = ms(g, 3, 116, 1, 0, 0, 0);
+  o2a(symi[79].sym)[4] = ms(g, 3, 116, 1, 1, TRUE, 0);
+  o2a(symi[80].sym)[4] = ms(g, 3, 116, 1, 2, TRUE, 0);
+  for (i = 1; i < argc; i++) {
+    load(g, argv[i]);
+  }
+  setjmp(top_jmp);
+  do {
+    printf("? ");
+  } while (ep(g, lread(g)));
+  return 0;
 }
+
 struct symbol_init symi[] = {{"NIL"}, {"T"}, {"&REST"}, {"&BODY"},
 {"&OPTIONAL"}, {"&KEY"}, {"&WHOLE"}, {"&ENVIRONMENT"}, {"&AUX"},
 {"&ALLOW-OTHER-KEYS"}, {"DECLARE", eval_declare, -1}, {"SPECIAL"},
