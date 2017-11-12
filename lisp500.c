@@ -9,8 +9,6 @@
 #include <string.h>
 #include <stdint.h>
 
-#define X
-
 #include <sys/time.h>
 #include <unistd.h>
 #include <dlfcn.h>
@@ -21,8 +19,6 @@
 lval strf(lval * f, const char *s);
 
 extern struct symbol_init symi[];
-
-
 
 lval *o2c(lval o) {
 	return (lval *) (o - 1);
@@ -63,6 +59,7 @@ lval s2o(lval * s) {
 cint_platform sp(lval o) {
   return (o & 3) == 3;
 }
+
 #define TRUE symi[1].sym
 #define T g[-2]
 #define U g[-3]
@@ -227,8 +224,7 @@ lval gc(lval* f) {
   return 0;
 }
 
-lval *m0(lval * g, int n)
-{
+lval *m0(lval * g, int n) {
 	lval *m = memf;
 	lval *p = 0;
 	n = (n + 1) & ~1;
@@ -247,6 +243,7 @@ lval *m0(lval * g, int n)
 		} p = m;
 	} return 0;
 }
+
 lval *ma0(lval * g, int n) {
 	lval *m;
 st:	m = m0(g, n + 2);
@@ -256,6 +253,7 @@ st:	m = m0(g, n + 2);
 	} *m = n << 8;
 	return m;
 }
+
 lval *ms0(lval * g, int n) {
 	lval *m;
 st:	m = m0(g, (n + 12) / 4);
@@ -265,6 +263,7 @@ st:	m = m0(g, (n + 12) / 4);
 	} *m = (n + 4) << 6;
 	return m;
 }
+
 lval *mb0(lval * g, int n) {
 	lval *m;
 st:	m = m0(g, (n + 95) / 32);
@@ -274,7 +273,8 @@ st:	m = m0(g, (n + 95) / 32);
 	} *m = (n + 31) << 3;
 	return m;
 }
-X lval ma(lval * g, int n,...) {
+
+lval ma(lval * g, int n,...) {
 	va_list v;
 	int i;
 	lval *m;
@@ -291,7 +291,8 @@ st:	va_start(v, n);
 		m[2 + i] = va_arg(v, lval);
 	return a2o(m);
 }
-X lval ms(lval * g, int n,...) {
+
+lval ms(lval * g, int n,...) {
 	va_list v;
 	int i;
 	lval *m;
@@ -305,12 +306,12 @@ st:	va_start(v, n);
 		m[2 + i] = va_arg(v, lval);
 	return s2o(m);
 }
-double o2d(lval o)
-{
+
+double o2d(lval o) {
 	return sp(o) ? *(double *) (o2s(o) + 2) : o >> 5;
 }
-lval d2o(lval * g, double d)
-{
+
+lval d2o(lval * g, double d) {
 	lval x = (lval) d << 5 | 16;
 	lval *a;
 	if (o2d(x) == d)
@@ -320,9 +321,11 @@ lval d2o(lval * g, double d)
 	*(double *) (a + 2) = d;
 	return s2o(a);
 }
+
 int o2i(lval o) {
 	return (int) o2d(o);
 }
+
 unsigned o2u(lval o) {
 	return (unsigned) o2d(o);
 }
@@ -347,12 +350,12 @@ int string_equal_do(lval a, lval b) {
   return 1;
 }
 
-int string_equal(lval a, lval b)
-{
+int string_equal(lval a, lval b) {
 	return a == b || (sp(a) && sp(b) &&
 		o2s(a)[1] == 20 && o2s(b)[1] == 20 && o2s(a)[0] == o2s(b)[0]
 			  && string_equal_do(a, b));
 }
+
 lval argi(lval a, lval * b) {
 	if (cp(a)) {
 		*b = cdr(a);
