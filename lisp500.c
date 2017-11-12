@@ -127,7 +127,7 @@ lval* binding(lval* f, lval sym, int type, int* macro) {
   for (env = E; env; env = cdr(env)) {
     lval e = caar(env);
     if ((type || cp(e)) ?
-	(car(e) == sym && (cdr(e) >> 4) == type) :
+	((car(e) == sym) && ((cdr(e) >> 4) == type)) :
 	(e == sym)) {
       if (macro)
 	*macro = cp(e) && cdr(e) & 8;
