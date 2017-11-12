@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #define X
 
@@ -15,53 +16,53 @@
 #include <dlfcn.h>
 #include <sys/utsname.h>
 
+#include "defs.h"
 
-typedef int lval;
+lval strf(lval * f, const char *s);
+
+extern struct symbol_init symi[];
+
+
+
 lval *o2c(lval o) {
 	return (lval *) (o - 1);
 }
-lval c2o(lval * c)
-{
-	return (lval) c + 1;
+
+lval c2o(lval * c) {
+  return (lval) c + 1;
 }
-int cp(lval o)
-{
-	return (o & 3) == 1;
+
+cint_platform cp(lval o) {
+  return (o & 3) == 1;
 }
-lval *o2a(lval o) {
-	return (lval *) (o - 2);
+
+lval* o2a(lval o) {
+  return (lval *) (o - 2);
 }
-lval a2o(lval * a)
-{
-	return (lval) a + 2;
+
+lval a2o(lval * a) {
+  return (lval) a + 2;
 }
-int ap(lval o)
-{
-	return (o & 3) == 2;
+
+cint_platform ap(lval o) {
+  return (o & 3) == 2;
 }
-lval *o2s(lval o) {
-	return (lval *) (o - 3);
+
+lval* o2s(lval o) {
+  return (lval *) (o - 3);
 }
+
 char *o2z(lval o) {
-	return (char *) (o - 3 + 2 * sizeof(lval));
+  return (char *) (o - 3 + 2 * sizeof(lval));
 }
-lval s2o(lval * s)
-{
-	return (lval) s + 3;
+
+lval s2o(lval * s) {
+  return (lval) s + 3;
 }
-int sp(lval o)
-{
-	return (o & 3) == 3;
+
+cint_platform sp(lval o) {
+  return (o & 3) == 3;
 }
-struct symbol_init {
-	const char *name;
-	     lval(*fun) ();
-	int argc;
-	    lval(*setfun) ();
-	int setargc;
-	lval sym;
-};
-extern struct symbol_init symi[];
 #define TRUE symi[1].sym
 #define T g[-2]
 #define U g[-3]
@@ -70,53 +71,63 @@ extern struct symbol_init symi[];
 #define NF(n) lval *g; g=f+n+3; f[1]=0; g[-1]=(n<<5)|16; *g=*f;
 #define E *f
 #define NE *g
-lval car(lval c)
-{
-	return (c & 3) == 1 ? o2c(c)[0] : 0;
+
+lval car(lval c) {
+  return (c & 3) == 1 ? o2c(c)[0] : 0;
 }
-lval cdr(lval c)
-{
-	return (c & 3) == 1 ? o2c(c)[1] : 0;
+
+lval cdr(lval c) {
+  return (c & 3) == 1 ? o2c(c)[1] : 0;
 }
+
 lval caar(lval c) {
-	return car(car(c));
-} lval lread(lval *);
+  return car(car(c));
+}
+
+lval lread(lval *);
+
 lval cdar(lval c) {
-	return cdr(car(c));
-} lval evca(lval *, lval);
+  return cdr(car(c));
+}
+
+lval evca(lval *, lval);
+
 lval cadr(lval c) {
-	return car(cdr(c));
-} int dbgr(lval *, int, lval, lval *);
+  return car(cdr(c));
+}
+
+int dbgr(lval *, int, lval, lval *);
+
 lval cddr(lval c) {
-	return cdr(cdr(c));
+  return cdr(cdr(c));
 } void print(lval);
-lval set_car(lval c, lval val)
-{
-	return o2c(c)[0] = val;
+
+lval set_car(lval c, lval val) {
+  return o2c(c)[0] = val;
 }
-lval set_cdr(lval c, lval val)
-{
-	return o2c(c)[1] = val;
+
+lval set_cdr(lval c, lval val) {
+  return o2c(c)[1] = val;
 }
-lval *binding(lval * f, lval sym, int type, int *macro)
-{
-	lval env;
-st:
-	for (env = E; env; env = cdr(env)) {
-		lval e = caar(env);
-		if (type || cp(e) ? car(e) == sym && (cdr(e) >> 4) == type : e == sym) {
-			if (macro)
-				*macro = cp(e) && cdr(e) & 8;
-			return o2c(car(env)) + 1;
-		}
-	}
-	if (macro)
-		*macro = (o2a(sym)[8] >> type) & 32;
-	if (type > 2) {
-		dbgr(f, type, sym, &sym);
-		goto st;
-	}
-	return o2a(sym) + 4 + type;
+
+lval *binding(lval * f, lval sym, int type, int *macro) {
+  lval env;
+ st:
+  for (env = E; env; env = cdr(env)) {
+    lval e = caar(env);
+    if (type || cp(e) ? car(e) == sym && (cdr(e) >> 4) == type : e == sym) {
+      if (macro)
+	*macro = cp(e) && cdr(e) & 8;
+      return o2c(car(env)) + 1;
+    }
+  }
+  if (macro)
+    *macro = (o2a(sym)[8] >> type) & 32;
+  if (type > 2) {
+    dbgr(f, type, sym, &sym);
+    goto st;
+  }
+  return o2a(sym) + 4 + type;
 }
 lval *memory;
 lval *memf;
@@ -129,26 +140,26 @@ lval pkg;
 lval pkgs;
 lval kwp = 0;
 void gcm(lval v) {
-	lval *t;
-	int i;
-st:	t = (lval *) (v & ~3);
-	if (v & 3 && !(t[0] & 4)) {
-		t[0] |= 4;
-		switch (v & 3) {
-		case 1:
-			gcm(t[0] - 4);
-			v = t[1];
-			goto st;
-		case 2:
-			gcm(t[1] - 4);
-			if (t[0] >> 8) {
-				for (i = 1; i < t[0] >> 8; i++)
-					gcm(t[i + 1]);
-				v = t[i + 1];
-				goto st;
-			}
-		}
-	}
+  lval *t;
+  int i;
+ st:	t = (lval *) (v & ~3);
+  if (v & 3 && !(t[0] & 4)) {
+    t[0] |= 4;
+    switch (v & 3) {
+    case 1:
+      gcm(t[0] - 4);
+      v = t[1];
+      goto st;
+    case 2:
+      gcm(t[1] - 4);
+      if (t[0] >> 8) {
+	for (i = 1; i < t[0] >> 8; i++)
+	  gcm(t[i + 1]);
+	v = t[i + 1];
+	goto st;
+      }
+    }
+  }
 }
 
 // The following two function wrap our conversion between mem pointer
@@ -156,7 +167,7 @@ st:	t = (lval *) (v & ~3);
 // i.e. pointers might be either 32 bits or 64bits. Lisp values are
 // always 32 bits.
 void* lval_2_pointer(lval lv) {
-  // most portable?
+  // Note, we must never  portable?
   unsigned i = (unsigned) lv;
   return (void*) i;
     // unsigned int x = 0xFFFFFFFF;
@@ -315,6 +326,7 @@ int o2i(lval o) {
 unsigned o2u(lval o) {
 	return (unsigned) o2d(o);
 }
+
 lval cons(lval * g, lval a, lval d) {
 	lval *c = m0(g, 2);
 	if (!c) {
@@ -326,14 +338,15 @@ lval cons(lval * g, lval a, lval d) {
 	c[1] = d;
 	return c2o(c);
 }
-int string_equal_do(lval a, lval b)
-{
-	int i;
-	for (i = 0; i < o2s(a)[0] / 64 - 4; i++)
-		if (o2z(a)[i] != o2z(b)[i])
-			return 0;
-	return 1;
+
+int string_equal_do(lval a, lval b) {
+  int i;
+  for (i = 0; i < o2s(a)[0] / 64 - 4; i++)
+    if (o2z(a)[i] != o2z(b)[i])
+      return 0;
+  return 1;
 }
+
 int string_equal(lval a, lval b)
 {
 	return a == b || (sp(a) && sp(b) &&
@@ -1101,7 +1114,8 @@ lval lfasl(lval * f) {
 	s = dlsym(h, "init");
 	return s(f);
 }
-lval luname(lval * f) {
+
+lval luname(lval* f) {
 	struct utsname un;
 	uname(&un);
 	f[1] = cons(f + 1, strf(f + 1, un.machine), 0);
@@ -1109,6 +1123,7 @@ lval luname(lval * f) {
 	f[1] = cons(f + 1, strf(f + 1, un.release), f[1]);
 	return cons(f + 1, strf(f, un.sysname), f[1]);
 }
+
 #endif
 FILE *ins;
 void load(lval * f, char *s) {
@@ -1452,6 +1467,7 @@ lval lread(lval * g) {
 		getnws();
 	return is(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
 }
+
 lval strf(lval * f, const char *s) {
 	int j = strlen(s);
 	lval *str = ms0(f, j);
@@ -1460,6 +1476,7 @@ lval strf(lval * f, const char *s) {
 		((char *) str)[7 + j] = s[j - 1];
 	return s2o(str);
 }
+
 lval mkv(lval * f) {
 	int i = 2;
 	lval *r = ma0(f, 1021);
