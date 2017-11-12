@@ -17,6 +17,9 @@
 #include "defs.h"
 
 lval strf(lval * f, const char *s);
+lval lread(lval*);
+lval evca(lval *, lval);
+int dbgr(lval *, int, lval, lval *);
 
 extern struct symbol_init symi[];
 
@@ -81,19 +84,13 @@ lval caar(lval c) {
   return car(car(c));
 }
 
-lval lread(lval *);
-
 lval cdar(lval c) {
   return cdr(car(c));
 }
 
-lval evca(lval *, lval);
-
 lval cadr(lval c) {
   return car(cdr(c));
 }
-
-int dbgr(lval *, int, lval, lval *);
 
 lval cddr(lval c) {
   return cdr(cdr(c));
@@ -225,23 +222,26 @@ lval gc(lval* f) {
 }
 
 lval *m0(lval * g, int n) {
-	lval *m = memf;
-	lval *p = 0;
-	n = (n + 1) & ~1;
-	for (; m; m = (lval *) m[0]) {
-		if (n <= m[1]) {
-			if (m[1] == n)
-				if (p)
-					p[0] = m[0];
-				else
-					memf = (lval *) m[0];
-			else {
-				m[1] -= n;
-				m += m[1];
-			}
-			return m;
-		} p = m;
-	} return 0;
+  lval *m = memf;
+  lval *p = 0;
+  n = (n + 1) & ~1;
+  for (; m; m = (lval *) m[0]) {
+    if (n <= m[1]) {
+      if (m[1] == n) {
+	if (p) {
+	  p[0] = m[0];
+	} else {
+	  memf = (lval *) m[0];
+	}
+      } else {
+	m[1] -= n;
+	m += m[1];
+      }
+      return m;
+    }
+    p = m;
+  }
+  return 0;
 }
 
 lval *ma0(lval * g, int n) {
@@ -1586,52 +1586,50 @@ lval lrp(lval * f, lval * h) {
 	} return d2o(f, r);
 }
 #endif
-int main(int argc, char *argv[])
-{
-	lval *g;
-	int i;
-	lval sym;
-	memory_size = 4 * 2048 * 1024;
-	memory = malloc(memory_size);
-	memf = memory;
-	memset(memory, 0, memory_size);
-	memf[0] = 0;
-	memf[1] = memory_size / 4;
-	stack = malloc(256 * 1024);
-	memset(stack, 0, 256 * 1024);
-	g = stack + 5;
-	pkg = mkp(g, "CL", "COMMON-LISP");
-	for (i = 0; i < 88; i++) {
-		sym = is(g, pkg, strf(g, symi[i].name));
-		if (i < 10)
-			o2a(sym)[4] = sym;
-		ins = stdin;
-		symi[i].sym = sym;
-		if (symi[i].fun)
-			o2a(sym)[5] = ma(g, 5, 212, ms(g, 3, 212, symi[i].fun, 0, -1), 0, 0, 0, sym);
-		if (symi[i].setfun)
-			o2a(sym)[6] = ma(g, 5, 212, ms(g, 3, 212, symi[i].setfun, 0, -1), 8, 0, 0, sym);
-		o2a(sym)[7] = i << 3;
-	}
-	kwp = mkp(g, "", "KEYWORD");
-	o2a(symi[81].sym)[4] = pkgs = l2(g, kwp, pkg);
-#ifdef _WIN32
-	o2a(symi[78].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_INPUT_HANDLE), 0, 0);
-	o2a(symi[79].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_OUTPUT_HANDLE), TRUE, 0);
-	o2a(symi[80].sym)[4] = ms(g, 3, 116, 1, GetStdHandle(STD_ERROR_HANDLE), TRUE, 0);
-#else
-	o2a(symi[78].sym)[4] = ms(g, 3, 116, 1, 0, 0, 0);
-	o2a(symi[79].sym)[4] = ms(g, 3, 116, 1, 1, TRUE, 0);
-	o2a(symi[80].sym)[4] = ms(g, 3, 116, 1, 2, TRUE, 0);
-#endif
-	for (i = 1; i < argc; i++)
-		load(g, argv[i]);
-	setjmp(top_jmp);
-	do
-		printf("? ");
-	while (ep(g, lread(g)));
-	return 0;
+
+int main(int argc, char *argv[]) {
+  lval *g;
+  int i;
+  lval sym;
+  memory_size = 4 * 2048 * 1024;
+  memory = malloc(memory_size);
+  memf = memory;
+  memset(memory, 0, memory_size);
+  memf[0] = 0;
+  memf[1] = memory_size / 4;
+  stack = malloc(256 * 1024);
+  memset(stack, 0, 256 * 1024);
+  g = stack + 5;
+  pkg = mkp(g, "CL", "COMMON-LISP");
+  for (i = 0; i < 88; i++) {
+    sym = is(g, pkg, strf(g, symi[i].name));
+    if (i < 10) {
+      o2a(sym)[4] = sym;
+    }
+    ins = stdin;
+    symi[i].sym = sym;
+    if (symi[i].fun) {
+      o2a(sym)[5] = ma(g, 5, 212, ms(g, 3, 212, symi[i].fun, 0, -1), 0, 0, 0, sym);
+    }
+    if (symi[i].setfun)
+      o2a(sym)[6] = ma(g, 5, 212, ms(g, 3, 212, symi[i].setfun, 0, -1), 8, 0, 0, sym);
+    o2a(sym)[7] = i << 3;
+  }
+  kwp = mkp(g, "", "KEYWORD");
+  o2a(symi[81].sym)[4] = pkgs = l2(g, kwp, pkg);
+  o2a(symi[78].sym)[4] = ms(g, 3, 116, 1, 0, 0, 0);
+  o2a(symi[79].sym)[4] = ms(g, 3, 116, 1, 1, TRUE, 0);
+  o2a(symi[80].sym)[4] = ms(g, 3, 116, 1, 2, TRUE, 0);
+  for (i = 1; i < argc; i++) {
+    load(g, argv[i]);
+  }
+  setjmp(top_jmp);
+  do {
+    printf("? ");
+  } while (ep(g, lread(g)));
+  return 0;
 }
+
 struct symbol_init symi[] = {{"NIL"}, {"T"}, {"&REST"}, {"&BODY"},
 {"&OPTIONAL"}, {"&KEY"}, {"&WHOLE"}, {"&ENVIRONMENT"}, {"&AUX"},
 {"&ALLOW-OTHER-KEYS"}, {"DECLARE", eval_declare, -1}, {"SPECIAL"},
