@@ -46,29 +46,32 @@ lval c2o(lval* c) {
 }
 
 // consp
-cint_platform cp(lval o) {
+bool cp(lval o) {
   return (o & 3) == 1;
 }
 
-// object to
+// object to array
 lval* o2a(lval o) {
-  return (lval *) (o - 2);
+  return (lval*) (o - 2);
 }
 
-lval a2o(lval * a) {
+// array to object
+lval a2o(lval* a) {
   return (lval) a + 2;
 }
 
-unsigned ap(lval o) {
+// arrayp
+bool ap(lval o) {
   return (o & 3) == 2;
 }
 
+//object to string
 lval* o2s(lval o) {
-  return (lval *) (o - 3);
+  return (lval*) (o - 3);
 }
 
-char *o2z(lval o) {
-  return (char *) (o - 3 + 2 * sizeof(lval));
+char* o2z(lval o) {
+  return (char*) (o - 3 + (2 * sizeof(lval)));
 }
 
 lval s2o(lval * s) {
