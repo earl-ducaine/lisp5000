@@ -35,18 +35,23 @@ lval kwp = 0;
 
 extern struct symbol_init symi[];
 
+#define DEBUG 0
+
 // convert lisp word to c pointer
 void* lisp_word_to_c_pointer(lval lisp_word) {
   uintptr_t c_pointer = (uintptr_t)lisp_word;
-  printf("lisp_word %lx, c_pointer: %lx\n",
-  	 (long unsigned)lisp_word,
-  	 (long unsigned) c_pointer);
   return (void*) c_pointer;
+
 }
 
 // object to cons
 lval* o2c(lval o) {
   // return (lval *) (o - 1);
+#if DEBUG
+  printf("(lval *) (o - 1) %lx, lisp_word_to_c_pointer(o - 1);\n",
+  	 (long unsigned)lisp_word,
+  	 (long unsigned) c_pointer);
+#endif
   return lisp_word_to_c_pointer(o - 1);
 }
 
