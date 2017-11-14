@@ -54,7 +54,7 @@ lval* o2c(lval o) {
   return lisp_word_to_c_pointer(o - 1);
 }
 
-void* c_pointer_to_lisp_word(lval* c_pointer) {
+lval c_pointer_to_lisp_word(lval* c_pointer) {
   uintptr_t lisp_word = (uintptr_t)c_pointer;
   return (lval)lisp_word;
 }
