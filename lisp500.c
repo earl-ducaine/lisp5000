@@ -37,11 +37,11 @@ extern struct symbol_init symi[];
 
 // convert lisp word to c pointer
 void* lisp_word_to_c_pointer(lval lisp_word) {
-  void* c_pointer = (void*) lisp_word;
-  printf("lisp_word %x, c_pointer: %lx\n",
-  	 (void*)lisp_word,
-  	 c_pointer);
-  return c_pointer;
+  uintptr_t c_pointer = (uintptr_t)lisp_word;
+  printf("lisp_word %lx, c_pointer: %lx\n",
+  	 (long unsigned)lisp_word,
+  	 (long unsigned) c_pointer);
+  return (void*) c_pointer;
 }
 
 // object to cons
