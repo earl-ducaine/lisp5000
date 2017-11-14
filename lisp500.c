@@ -95,7 +95,7 @@ char* o2z(lval o) {
 }
 
 lval s2o(lval * s) {
-  return (lval) s + 3;
+  return c_pointer_to_lisp_word(s) + 3;
 }
 
 cint_platform sp(lval o) {
@@ -166,7 +166,8 @@ lval *binding(lval * f, lval sym, int type, int *macro) {
 void gcm(lval v) {
   lval *t;
   int i;
- st:	t = (lval *) (v & ~3);
+ st:
+  t = lisp_word_to_c_pointer(v & ~3);
   if (v & 3 && !(t[0] & 4)) {
     t[0] |= 4;
     switch (v & 3) {
@@ -206,7 +207,7 @@ lval gc(lval* f) {
   int ml;
   printf(";garbage collecting...\n");
   while (memf) {
-    lval *n = (lval *) memf[0];
+    lval* n = lisp_word_to_c_pointer(memf[0]);
     memset(memf, 0, 4 * memf[1]);
     memf = (lval *) n;
   }
