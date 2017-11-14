@@ -35,9 +35,19 @@ lval kwp = 0;
 
 extern struct symbol_init symi[];
 
+// convert lisp word to c pointer
+void* lisp_word_to_c_pointer(lval lisp_word) {
+  void* c_pointer = (void*) lisp_word;
+  printf("lisp_word %x, c_pointer: %lx\n",
+  	 (void*)lisp_word,
+  	 c_pointer);
+  return c_pointer;
+}
+
 // object to cons
 lval* o2c(lval o) {
-	return (lval *) (o - 1);
+  // return (lval *) (o - 1);
+  return lisp_word_to_c_pointer(o - 1);
 }
 
 // cons to object
