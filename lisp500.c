@@ -77,7 +77,7 @@ lval* o2a(lval o) {
 
 // array to object
 lval a2o(lval* a) {
-  return (lval) a + 2;
+  return c_pointer_to_lisp_word(a) + 2;
 }
 
 // arrayp
@@ -87,7 +87,7 @@ bool ap(lval o) {
 
 //object to string
 lval* o2s(lval o) {
-  return (lval*) (o - 3);
+  return lisp_word_to_c_pointer(o) - 3;
 }
 
 char* o2z(lval o) {
