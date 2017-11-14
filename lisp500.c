@@ -38,9 +38,9 @@ extern struct symbol_init symi[];
 #define DEBUG 0
 
 // convert lisp word to c pointer
-void* lisp_word_to_c_pointer(lval lisp_word) {
+lval* lisp_word_to_c_pointer(lval lisp_word) {
   uintptr_t c_pointer = (uintptr_t)lisp_word;
-  return (void*) c_pointer;
+  return (lval*) c_pointer;
 }
 
 // object to cons
