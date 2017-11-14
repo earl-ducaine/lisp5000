@@ -8,12 +8,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-
 #include <sys/time.h>
 #include <unistd.h>
 #include <dlfcn.h>
 #include <sys/utsname.h>
 #include <stdbool.h>
+#include <waitpid.h>
 
 #include "defs.h"
 
