@@ -13,7 +13,7 @@
 #include <dlfcn.h>
 #include <sys/utsname.h>
 #include <stdbool.h>
-#include <waitpid.h>
+#include <sys/waitpid.h>
 
 #include "defs.h"
 
