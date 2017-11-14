@@ -3,7 +3,7 @@ lisp500 : lisp500.o
 #	cc  -o lisp500 -lm  lisp500.c
 
 lisp500.o : lisp500.c defs.h
-	cc -c lisp500.c
+	gcc -ggdb -c lisp500.c
 
 clean :
 	rm -f lisp500 lisp500.o

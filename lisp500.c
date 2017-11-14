@@ -498,7 +498,8 @@ lval infn(lval * f, lval * h)
 		return eval_body(g, o2a(fn)[5]);
 	return mvalues(car(vs));
 }
-X lval call(lval * f, lval fn, unsigned d)
+
+lval call(lval * f, lval fn, unsigned d)
 {
 	lval *g = f + d + 3;
 	xvalues = 8;
@@ -1621,6 +1622,7 @@ int main(int argc, char *argv[])
 	while (ep(g, lread(g)));
 	return 0;
 }
+
 struct symbol_init symi[] = {{"NIL"}, {"T"}, {"&REST"}, {"&BODY"},
 {"&OPTIONAL"}, {"&KEY"}, {"&WHOLE"}, {"&ENVIRONMENT"}, {"&AUX"},
 {"&ALLOW-OTHER-KEYS"}, {"DECLARE", eval_declare, -1}, {"SPECIAL"},
