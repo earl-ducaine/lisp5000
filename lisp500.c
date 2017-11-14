@@ -55,8 +55,8 @@ lval* o2c(lval o) {
 }
 
 void* c_pointer_to_lisp_word(lval* c_pointer) {
-  uintptr_t c_pointer = (uintptr_t)lisp_word;
-  return (lval) c_pointer;
+  uintptr_t lisp_word = (uintptr_t)c_pointer;
+  return (lval)lisp_word;
 }
 
 // cons to object
