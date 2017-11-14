@@ -72,7 +72,7 @@ bool cp(lval o) {
 
 // object to array
 lval* o2a(lval o) {
-  return (lval*) (o - 2);
+  return lisp_word_to_c_pointer(o - 2);
 }
 
 // array to object
