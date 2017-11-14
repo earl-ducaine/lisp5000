@@ -3,8 +3,8 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-typedef uint32_t lval;
-// typedef int32_t lval;
+// typedef uint32_t lval;
+typedef int32_t lval;
 
 // a type coordinated with lval to be the same size that holds pure c
 // values only. (Not always clear what 'pure c values' means.
