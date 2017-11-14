@@ -191,13 +191,13 @@ void gcm(lval v) {
 // and lisp value, these may are maynot be the same size,
 // i.e. pointers might be either 32 bits or 64bits. Lisp values are
 // always 32 bits.
-void* lval_2_pointer(lval lv) {
-  // Note, we must never  portable?
-  unsigned i = (unsigned) lv;
-  return (void*) i;
-    // unsigned int x = 0xFFFFFFFF;
-    // int *y = (int *)&x;
-}
+/* void* lval_2_pointer(lval lv) { */
+/*   // Note, we must never  portable? */
+/*   unsigned i = (unsigned) lv; */
+/*   return (void*) i; */
+/*     // unsigned int x = 0xFFFFFFFF; */
+/*     // int *y = (int *)&x; */
+/* } */
 
 lval gc(lval* f) {
   int i;
@@ -215,7 +215,7 @@ lval gc(lval* f) {
   gcm(pkgs);
   gcm(dyns);
   for (; f > stack; f--) {
-    if ((*f & 3) && (*f < memory || *f > memory + memory_size / 4)) {
+    if ((*f & 3) && (lisp_word_to_c_pointer(*f) < memory || lisp_word_to_c_pointer(*f) > memory + memory_size / 4)) {
       printf("%x\n", *f);
     }
     gcm(*f);
