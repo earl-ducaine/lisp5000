@@ -41,7 +41,6 @@ extern struct symbol_init symi[];
 void* lisp_word_to_c_pointer(lval lisp_word) {
   uintptr_t c_pointer = (uintptr_t)lisp_word;
   return (void*) c_pointer;
-
 }
 
 // object to cons
@@ -53,6 +52,11 @@ lval* o2c(lval o) {
   	 (long unsigned) c_pointer);
 #endif
   return lisp_word_to_c_pointer(o - 1);
+}
+
+void* c_pointer_to_lisp_word(lval lisp_word) {
+  uintptr_t c_pointer = (uintptr_t)lisp_word;
+  return (void*) c_pointer;
 }
 
 // cons to object
