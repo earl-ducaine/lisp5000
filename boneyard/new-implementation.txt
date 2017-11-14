@@ -1,0 +1,141 @@
+old memory layout
+=================
+
+The third lowest bit in pointers is used by the garbage
+collector. When garbage collection is not in progress, it is zero.
+
+Pointers use the low two bits for flags. The rest is for the address
+bits.  Flag bits 00 are for immediates. 01 are for conses. 02 are for
+boxed objects. 03 are for strings and doubles.
+
+The immediate with all bits zero is NIL.
+
+The immediates with the bit pattern ...ccc11000 are characters.  The
+character unicode code point is contained in the next higher bits.
+
+The immediates with the bit pattern ...iii10000 are fixnums.  The
+highest bit is the sign bit, and the representation is two's
+complement.
+
+Conses are two slots long.  The first slot is the CAR and the second
+slot is the CDR.
+
+The second slot of a boxed object has the third lowest bit set. This
+is a reliable boxed object start marker when garbage collection is not
+in progress.  The eight low bits of the first slot are used for flags.
+The high bits are the length of the object, in slots, minus two.  The
+second slot is a type indicator for the object. 212: function 20:
+symbol 116: array 180: package Otherwise the type indicator is a class
+object.
+
+Symbol layout:
+0: 9<<8
+1: 20 (14 00010100)
+2: name (string)
+3: 0
+4: 8 value
+5: 8 function
+6: 8 setf-function
+7: -8 (for builtins index<<3)
+8: 16 (flags. 128: special 32: type(0) macro (variable), 64: type(1) macro (function))
+9: package
+10: 0
+
+Array layout:
+0: length<<8
+1: 116 (74 01110100)
+2+n: nth element
+
+Package layout:
+0: 6<<8
+1: 180 (B4 10110100)
+2: list of names (strings)
+3: 1021-element array
+4: 1021-element array
+5: 0
+6: 0
+7: 0
+
+Function layout:
+0: 5<<8
+1: 212 (D4 11010100)
+2: ms(f,3,212,infn,0,-1)
+3: environment (list)
+4: lambda-list
+5: code
+6: name
+
+Unboxed objects:
+
+String layout:
+0: (length+4)<<6
+1: 20 (14 00010100)
+2+n/4: character code, terminating 0
+
+Double layout:
+0: 2<<8
+1: 84 (54 01010100)
+2: double-low
+3: double-high
+
+Other:
+0: (length+31)<<3
+1: type
+2+n/32: bit
+
+Byte code plan
+==============
+
+Variables: constant table, instruction pointer, closure pointer,
+temporary, stack pointer, dynamic state pointer
+
+Operations:
+ (get|set)-(direct|indirect)-(stack|closure) index
+ get-constant constant-index
+ (get|set)-symbol-(value|function) constant-index
+ make-function instruction-constant-index constant-constant-index closure-count
+ make-cons
+ make-nil
+ make-t
+ if-short else-skip-count
+ go-short skip-count
+ if then-instruction-constant-index else-instruction-constant-index
+ block instruction-constant-index
+ funcall count
+ native-call count
+ local-return
+ function-return
+ add-dynamic-state ?
+ rewind-dynamic-state ?
+
+block      let*                  return-from      
+catch      load-time-value       setq             
+eval-when  locally               symbol-macrolet  
+flet       macrolet              tagbody          
+function   multiple-value-call   the              
+go         multiple-value-prog1  throw            
+if         progn                 unwind-protect   
+labels     progv                                  
+let        quote                                  
+
+[ ]<-sp
+[ ]
+[7+--\ <-dp
+[a]  |
+[b]  |
+[ ]  |
+[ ]  |
+[ ]  |
+[ ]  |
+[ ]<-/ (<-old dp)
+
+Dynamic pointer entry (catch/unwind/let):
+dp[0]: fixnum distance to next older dp entry
+dp[-1]: ct/ct/sym
+dp[-2]: ip/ip/saved
+dp[-3]: cp/cp
+dp[-4]: tag/unbound-marker
+
+unwind: ct, ip, cp, (sp)
+let: symbol, saved value
+catch: tag, ct, ip, cp, (sp)

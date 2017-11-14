@@ -1,0 +1,240 @@
+
+* memory layout
+
+** The Lisp word 
+   The Lisp word is 32 bits long. There are two categories of Lisp
+   data: pointers and lisp object. 
+
+
+** Pointers
+   Lisp pointers, point to Lisp objects.  Pointer layout:
+
+   <31-3> Address bits pointing to 32 bit aligned Lisp word (slot).
+
+   <2>    Used by the garbage collector. Set to 1 when garbage collection
+          is in progress.
+
+   <1-0>  Flag bits indicate the type of sub-category pointed to: 
+          00  For immediates 
+          01  Conses 
+          02  Boxed objects 
+          03  Strings and doubles
+
+** Lisp objects
+
+*** Immediates
+    The immediate with all bits zero, x0000, is NIL.
+
+    <31-5> Value of immediate
+
+    <4-0>  Lisp type of immediate
+           11000  Characters
+
+                  The value range, <31-5>, contains the unicode code
+                  point of the character.
+
+           10000  Fixnums
+
+                  The fixnum is encoded as two's complement in the
+                  value range <31-5>.
+
+*** Conses
+    Conses are two slots long.  The first slot is the CAR and the second
+    slot is the CDR.
+
+*** Boxed objects
+    Boxed objects are encoded as two or more sequential slots in
+    memory and can.
+    
+**** Slot 1
+     
+     <31-8>  Length of boxed object not including the two manditory
+             header slots, i.e. length of the object, in slots, minus
+             two.
+	     
+     <7-0>   Flags
+
+**** Slot 2
+     <31-3> Indicates type for the object. Fundamental lisp types
+            have the following encodings reserved in <8-3>
+
+	     00010  Symbol
+	     00010
+	     01110  Array
+	     10110  Package
+	     11010  Function
+
+	     All other encodings in this space can be used for other
+	     list types which are represented using CLOS(ish) classes.
+
+     <2>     For boxed objects always set to 1. This is a reliable boxed
+             object start marker when garbage collection is not in
+             progress.
+
+**** Symbols
+
+   0: #x0000009?
+   1: #x00000014 
+   2: name (pointer to string)
+   3: 0
+   4: 8 value
+   5: 8 function
+   6: 8 setf-function
+   7: -8 (for builtins index<<3)
+   8: 16 (flags. 128: special 32: type(0) macro (variable), 64: type(1) macro (function))
+   9: package
+   10: 0
+
+**** Arrays
+
+   0: Length, flags
+      <31-8>  Number of elements in array
+      <7-0>   Flags
+   
+   1: #x00000116
+   2+n: nth element
+
+**** Packages
+   
+   0: #x0000006?
+   1: #x000000B4
+   2: names (pointer to list of strings)
+   3: interned symbols? 1021-element array
+   4: exported symbols? 1021-element array
+   5: 0
+   6: 0
+   7: 0
+
+**** Functions
+
+   0: #x00000005?
+   1: #x000000D4
+   2: ms(f,3,212,infn,0,-1) ???
+   3: environment (list)
+   4: lambda-list
+   5: code
+   6: name
+
+*** Unboxed objects:
+
+**** Strings
+
+   0: Length, flags
+      <31-6>  Number of elements in array + 4
+      <6-0>   ??????
+   
+   1: #x00000014
+
+   2 + (n/4): Character code, terminating 0, i.e. 4 chars per word.
+              Note, number of chars might be less than n.  This is on
+              account of the fact that chars are utf-8, which dictates
+              that some characters require two (or more) consecutive
+              bytes.
+
+**** Double 
+   
+   0: #x0000002?
+   1: #x00000054
+   2: double-low (little endian)
+   3: double-high
+
+**** Other (what others? any future?)
+
+   0: (length+31)<<3
+   1: type
+   2+n/32: bit
+
+* Byte code
+
+* Variables
+
+** constant table
+   
+** instruction pointer
+   
+** closure pointer
+   
+** temporary
+   
+** stack pointer
+   
+** dynamic state pointer
+
+* Operations
+
+** Primitive   
+
+*** (get|set)-(direct|indirect)-(stack|closure) index
+    
+*** get-constant constant-index
+
+*** (get|set)-symbol-(value|function) constant-index
+    
+*** make-function instruction-constant-index constant-constant-index closure-count
+
+*** make-cons
+
+*** make-nil
+
+*** make-t
+
+*** if-short else-skip-count
+
+*** go-short skip-count
+
+*** if then-instruction-constant-index else-instruction-constant-index
+
+*** block instruction-constant-index
+
+*** funcall count
+
+*** native-call count
+
+*** local-return
+
+*** function-return
+
+*** add-dynamic-state ?
+
+*** rewind-dynamic-state ?
+
+** Lisp level operations
+
+   block      let*                  return-from      
+   catch      load-time-value       setq             
+   eval-when  locally               symbol-macrolet  
+   flet       macrolet              tagbody          
+   function   multiple-value-call   the              
+   go         multiple-value-prog1  throw            
+   if         progn                 unwind-protect   
+   labels     progv                                  
+   let        quote                                  
+
+** Stack layout
+
+   Reminder: poceedure for a function call: place arguments on the
+   stack, then call the function which pops the arguments off the
+   stack, executes and places any return values on the stack before
+   returning.
+
+   [ ]<-sp
+   [ ]
+   [7+--\ <-dp
+   [a]  |
+   [b]  |
+   [ ]  |
+   [ ]  |
+   [ ]  |
+   [ ]  |
+   [ ]<-/ (<-old dp)
+
+   Dynamic pointer entry (catch/unwind/let):
+   dp[0]: fixnum distance to next older dp entry
+   dp[-1]: ct/ct/sym
+   dp[-2]: ip/ip/saved
+   dp[-3]: cp/cp
+   dp[-4]: tag/unbound-marker
+
+   unwind: ct, ip, cp, (sp)
+   let: symbol, saved value
+   catch: tag, ct, ip, cp, (sp)
