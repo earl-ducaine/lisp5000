@@ -60,8 +60,9 @@ lval c_pointer_to_lisp_word(lval* c_pointer) {
 }
 
 // cons to object
-lval c2o(lval* c) {
-  return (lval) c + 1;
+lval c2o(lval* c_pointer) {
+  // return (lval) c + 1;
+  return c_pointer_to_lisp_word(c_pointer) + 1;
 }
 
 // consp
