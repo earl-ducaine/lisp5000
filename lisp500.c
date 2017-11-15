@@ -803,18 +803,9 @@ lval eval_return_from(lval * f, lval ex) {
   void* void_pointer = lisp_word_to_c_pointer(o2s(cdr(b))[2]);
   lval (*function_pointer) () =
     (lval (*) ()) void_pointer;
-
-    // void* function_pointer = o2s(cdr(b))[2];
+  // void* function_pointer = o2s(cdr(b))[2];
   // longjmp(*(jmp_buf *) (function_pointer))
-
-
-
-
     jmp = (jmp_buf *) function_pointer;
-
-
-
-
   if (jmp) {
     unwind(g, car(b));
     T = rvalues(g, evca(g, cdr(ex)));
@@ -856,6 +847,7 @@ st:
 	dbgr(g, 5, T, &T);
 	goto st;
 }
+
 lval eval_unwind_protect(lval * f, lval ex) {
 	NF(1) T = 0;
 	T = ma(g, 2, 52, E, cdr(ex));
@@ -865,11 +857,12 @@ lval eval_unwind_protect(lval * f, lval ex) {
 	unwind(g, cdr(dyns));
 	return mvalues(T);
 }
+
 lval eval_if(lval * f, lval ex) {
 	return evca(f, evca(f, ex) ? cdr(ex) : cddr(ex));
 }
-lval eval_multiple_value_call(lval * f, lval ex)
-{
+
+lval eval_multiple_value_call(lval * f, lval ex) {
 	lval *g = f + 3;
 	lval l;
 	f[1] = evca(f, ex);
@@ -883,6 +876,7 @@ lval eval_multiple_value_call(lval * f, lval ex)
 	} xvalues = 8;
 	return call(f, f[1], g - f - 3);
 }
+
 lval eval_multiple_value_prog1(lval * f, lval ex) {
 	NF(1) T = 0;
 	T = evca(g, ex);
@@ -1087,21 +1081,26 @@ lval liref(lval * f) {
 		write(1, "out of bounds in iref\n", 22);
 	return ((lval *) (f[1] & ~3))[o2u(f[2])] & ~4;
 }
+
 lval setfiref(lval * f) {
-	int i = o2i(f[3]);
-	if (i >= o2a(f[2])[0] / 256 + 2)
-		printf("out of bounds in setf iref\n");
-	return ((lval *) (f[2] & ~3))[i] = i == 1 ? f[1] | 4 : f[1];
+  int i = o2i(f[3]);
+  if (i >= o2a(f[2])[0] / 256 + 2) {
+    printf("out of bounds in setf iref\n");
+  }
+  return ((lval *) (f[2] & ~3))[i] = i == 1 ? f[1] | 4 : f[1];
 }
+
 lval lmakej(lval * f) {
-	lval *r = mb0(f, o2i(f[1]));
-	r[1] = o2i(f[2]);
-	memset(r + 2, 0, (o2i(f[1]) + 7) / 8);
-	return s2o(r);
+  lval *r = mb0(f, o2i(f[1]));
+  r[1] = o2i(f[2]);
+  memset(r + 2, 0, (o2i(f[1]) + 7) / 8);
+  return s2o(r);
 }
+
 lval ljref(lval * f) {
-	return d2o(f, o2s(f[1])[o2u(f[2])]);
+  return d2o(f, o2s(f[1])[o2u(f[2])]);
 }
+
 lval setfjref(lval * f) {
 	return o2s(f[2])[o2u(f[3])] = o2u(f[1]);
 }
