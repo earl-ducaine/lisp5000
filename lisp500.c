@@ -263,7 +263,7 @@ lval *m0(lval * g, int n) {
 	if (p) {
 	  p[0] = m[0];
 	} else {
-	  memf = (lval *) m[0];
+	  memf = lisp_word_to_c_pointer(m[0]);
 	}
       } else {
 	m[1] -= n;
