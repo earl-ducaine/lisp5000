@@ -553,7 +553,7 @@ lval call(lval * f, lval fn, unsigned d) {
   // Cast lisp word pointer lval* a function pointer which takes an
   // arbitrary number of arguments and returns a lisp word lval
   lval (*function_pointer) () =
-    lval (*function_pointer) () (o2s(fn)[2]);
+    (lval (*) ()) o2s(fn)[2];
 
   lval* f_results = (*function_pointer)(f, f + d + 1);
   return c_pointer_to_lisp_word(f_results);
