@@ -550,8 +550,10 @@ lval call(lval * f, lval fn, unsigned d) {
     dbgr(g, 7, 0, f);
   if (d > (unsigned) o2s(fn)[4])
     dbgr(g, 6, 0, f);
-  lval* f_results = ((lval(*) ()) o2s(fn)[2]) (f, f + d + 1);
-  return f_results;
+  // Cast function to take an arbitrary number of arguments and return
+  // an lisp word.
+  lval* f_results = ((lval* (*function_pointer) ()) o2s(fn)[2]) (f, f + d + 1);
+  return c_pointer_to_lisp_word(f_results);
 }
 
 lval eval_quote(lval * g, lval ex) {
