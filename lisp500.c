@@ -228,7 +228,7 @@ lval gc(lval* f) {
     l = ((m[1] & 4 ? m[0] >> 8 : 0) + 1) & ~1;
     if (m[0] & 4) {
       if (u) {
-	m[-ml] = (lval) memf;
+	m[-ml] = c_pointer_to_lisp_word(memf);
 	m[1 - ml] = ml;
 	memf = m - ml;
 	u = 0;
