@@ -805,7 +805,7 @@ lval eval_return_from(lval * f, lval ex) {
     (lval (*) ()) void_pointer;
 
     // void* function_pointer = o2s(cdr(b))[2];
-  longjmp(*(jmp_buf *) (function_pointer))
+  // longjmp(*(jmp_buf *) (function_pointer))
 
 
 
