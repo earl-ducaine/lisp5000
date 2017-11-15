@@ -216,7 +216,7 @@ lval gc(lval* f) {
   gcm(dyns);
   for (; f > stack; f--) {
     if (((*f & 3) && (lisp_word_to_c_pointer(*f) < memory) ||
-	 (lisp_word_to_c_pointer(*f) > (memory + memory_size / 4)))) {
+	 (lisp_word_to_c_pointer(*f) > (void*)(memory + memory_size / 4)))) {
       printf("%x\n", *f);
     }
     gcm(*f);
