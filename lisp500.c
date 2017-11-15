@@ -758,7 +758,7 @@ lval eval_go(lval * f, lval ex) {
   lval b = *binding(f, car(ex), 3, 0);
   if (o2s(cdr(b))[2]) {
     unwind(f, car(b));
-    void* function_pointer = o2s(cdr(b))[2]);
+    void* function_pointer = o2s(cdr(b))[2];
     longjmp(*(jmp_buf *) (o2s(cdr(b))[2]), car(ex));
   } dbgr(f, 9, car(ex), &ex);
   longjmp(top_jmp, 1);
