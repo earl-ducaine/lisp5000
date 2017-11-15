@@ -833,19 +833,19 @@ lval eval_catch(lval * f, lval ex) {
 }
 
 lval eval_throw(lval * f, lval ex) {
-	lval c;
-	NF(1) T = 0;
-	T = evca(g, ex);
-st:
-	for (c = dyns; c; c = cdr(c))
-		if (cp(car(c)) && caar(c) == T) {
-			unwind(g, c);
-			T = evca(g, cdr(ex));
-			T = rvalues(g, T);
-			longjmp(*(jmp_buf *) (o2s(cdar(c))[2]), cons(g, T, 0));
-		}
-	dbgr(g, 5, T, &T);
-	goto st;
+  lval c;
+  NF(1) T = 0;
+  T = evca(g, ex);
+ st:
+  for (c = dyns; c; c = cdr(c))
+    if (cp(car(c)) && caar(c) == T) {
+      unwind(g, c);
+      T = evca(g, cdr(ex));
+      T = rvalues(g, T);
+      longjmp(*(jmp_buf *) (o2s(cdar(c))[2]), cons(g, T, 0));
+    }
+  dbgr(g, 5, T, &T);
+  goto st;
 }
 
 lval eval_unwind_protect(lval * f, lval ex) {
