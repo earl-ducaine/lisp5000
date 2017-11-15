@@ -1090,7 +1090,7 @@ lval liref(lval* f) {
   if (o2u(f[2]) >= o2a(f[1])[0] / 256 + 2) {
     write(1, "out of bounds in iref\n", 22);
   }
-  lval* tmp_lval =  lisp_word_to_c_pointer((f[1] & ~3));
+  lval* tmp_lval =  lisp_word_to_c_pointer(f[1] & ~3);
   return (tmp_lval)[o2u(f[2])] & ~4;
   // return ((lval *) (f[1] & ~3))[o2u(f[2])] & ~4;
 }
@@ -1100,7 +1100,9 @@ lval setfiref(lval * f) {
   if (i >= o2a(f[2])[0] / 256 + 2) {
     printf("out of bounds in setf iref\n");
   }
-  return ((lval *) (f[2] & ~3))[i] = i == 1 ? f[1] | 4 : f[1];
+  lval* tmp_lval =  lisp_word_to_c_pointer(f[2] & ~3);
+  return (tmp_lval)[i] = i == 1 ? f[1] | 4 : f[1];
+  // return ((lval *) (f[2] & ~3))[i] = i == 1 ? f[1] | 4 : f[1];
 }
 
 lval lmakej(lval * f) {
