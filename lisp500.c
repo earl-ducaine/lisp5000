@@ -536,19 +536,22 @@ lval infn(lval * f, lval * h) {
 }
 
 lval call(lval * f, lval fn, unsigned d) {
-	lval *g = f + d + 3;
-	xvalues = 8;
-	if (o2a(fn)[1] == 20)
-		fn = o2a(fn)[5];
-	if (o2a(fn)[0] & 16)
-		fn = o2a(fn)[3];
-	*++f = fn;
-	fn = o2a(fn)[2];
-	if (d < (unsigned) o2s(fn)[3])
-		dbgr(g, 7, 0, f);
-	if (d > (unsigned) o2s(fn)[4])
-		dbgr(g, 6, 0, f);
-	return ((lval(*) ()) o2s(fn)[2]) (f, f + d + 1);
+  lval *g = f + d + 3;
+  xvalues = 8;
+  if (o2a(fn)[1] == 20) {
+    fn = o2a(fn)[5];
+  }
+  if (o2a(fn)[0] & 16) {
+    fn = o2a(fn)[3];
+  }
+  *(++f) = fn;
+  fn = o2a(fn)[2];
+  if (d < (unsigned) o2s(fn)[3])
+    dbgr(g, 7, 0, f);
+  if (d > (unsigned) o2s(fn)[4])
+    dbgr(g, 6, 0, f);
+  lval* f_results = ((lval(*) ()) o2s(fn)[2]) (f, f + d + 1);
+  return f_results;
 }
 
 lval eval_quote(lval * g, lval ex) {
