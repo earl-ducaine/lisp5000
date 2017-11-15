@@ -800,7 +800,21 @@ lval eval_return_from(lval * f, lval ex) {
   jmp_buf *jmp;
   NF(1) T = 0;
   b = *binding(g, car(ex), 4, 0);
-  jmp = (jmp_buf *) o2s(cdr(b))[2];
+  void* void_pointer = lisp_word_to_c_pointer(o2s(cdr(b))[2]);
+  lval (*function_pointer) () =
+    (lval (*) ()) void_pointer;
+
+    // void* function_pointer = o2s(cdr(b))[2];
+  longjmp(*(jmp_buf *) (function_pointer))
+
+
+
+
+  // jmp = (jmp_buf *) o2s(cdr(b))[2];
+
+
+
+
   if (jmp) {
     unwind(g, car(b));
     T = rvalues(g, evca(g, cdr(ex)));
