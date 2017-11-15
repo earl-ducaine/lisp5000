@@ -1058,31 +1058,34 @@ lval stringify(lval * f, lval l)
 lval lstring(lval * f, lval * h) {
 	return stringify(f, rest(h, f + 1));
 }
+
 lval lival(lval * f) {
-	return d2o(f, f[1]);
+  return d2o(f, f[1]);
 }
+
 lval lmakei(lval * f, lval * h) {
-	int i = 2;
-	int l = o2i(f[1]);
-	lval *r = ma0(h, l);
-	r[1] = f[2] | 4;
-	memset(r + 2, 0, 4 * o2i(f[1]));
-	for (f += 3; f < h; f++, i++) {
-		if (i >= l + 2)
-			printf("overinitializing in makei\n");
-		r[i] = *f;
-	}
-	return a2o(r);
+  int i = 2;
+  int l = o2i(f[1]);
+  lval *r = ma0(h, l);
+  r[1] = f[2] | 4;
+  memset(r + 2, 0, 4 * o2i(f[1]));
+  for (f += 3; f < h; f++, i++) {
+    if (i >= l + 2)
+      printf("overinitializing in makei\n");
+    r[i] = *f;
+  }
+  return a2o(r);
 }
-lval liboundp(lval * f)
-{
-	return o2a(f[1])[o2u(f[2])] == 8 ? 0 : TRUE;
+
+lval liboundp(lval * f) {
+  return o2a(f[1])[o2u(f[2])] == 8 ? 0 : TRUE;
 }
-lval limakunbound(lval * f)
-{
-	o2a(f[1])[o2u(f[2])] = 8;
-	return 0;
+
+lval limakunbound(lval * f) {
+  o2a(f[1])[o2u(f[2])] = 8;
+  return 0;
 }
+
 lval liref(lval * f) {
 	if (o2u(f[2]) >= o2a(f[1])[0] / 256 + 2)
 		write(1, "out of bounds in iref\n", 22);
