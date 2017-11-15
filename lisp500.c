@@ -693,120 +693,124 @@ lval eval_symbol_macrolet(lval * f, lval ex)
 	} NE = U;
 	return eval_body(g, cdr(ex));
 }
+
 lval eval_setq(lval * f, lval ex) {
-	lval r;
-	do {
-		r = evca(f, cdr(ex));
-		*binding(f, car(ex), 0, 0) = r;
-		ex = cddr(ex);
-	} while (ex);
-	return r;
+  lval r;
+  do {
+    r = evca(f, cdr(ex));
+    *binding(f, car(ex), 0, 0) = r;
+    ex = cddr(ex);
+  } while (ex);
+  return r;
 }
+
 lval eval_function(lval * f, lval ex) {
-	lval x;
-	ex = car(ex);
-	if (cp(ex))
-		if (car(ex) == symi[75].sym) {
-			lval n = 0;
-			x = cddr(ex);
-			if (!cdr(x) && caar(x) == symi[23].sym) {
-				x = car(x);
-				n = cadr(x);
-				x = cddr(x);
-			}
-			return ma(f, 5, 212, ms(f, 3, 212, infn, 0, -1), E, cadr(ex), x, n);
-		} else
-			x = *binding(f, cadr(ex), 2, 0);
-	else
-		x = *binding(f, ex, 1, 0);
-	if (x != 8)
-		return x;
-	dbgr(f, 1, ex, &x);
-	return x;
+  lval x;
+  ex = car(ex);
+  if (cp(ex))
+    if (car(ex) == symi[75].sym) {
+      lval n = 0;
+      x = cddr(ex);
+      if (!cdr(x) && caar(x) == symi[23].sym) {
+	x = car(x);
+	n = cadr(x);
+	x = cddr(x);
+      }
+      return ma(f, 5, 212, ms(f, 3, 212, infn, 0, -1), E, cadr(ex), x, n);
+    } else
+      x = *binding(f, cadr(ex), 2, 0);
+  else
+    x = *binding(f, ex, 1, 0);
+  if (x != 8)
+    return x;
+  dbgr(f, 1, ex, &x);
+  return x;
 }
-lval eval_tagbody(lval * f, lval ex)
-{
-	jmp_buf jmp;
-	lval tag;
-	lval e;
-	NF(2) T = U = 0;
-	U = ms(g, 1, 52, &jmp);
-	dyns = cons(g, U, dyns);
-	for (e = ex; e; e = cdr(e))
-		if (ap(car(e))) {
-			T = cons(g, dyns, U);
-			NE = cons(g, cons(g, cons(g, car(e), 48), T), NE);
-		} e = ex;
-again:
-	if (!(tag = setjmp(jmp))) {
-		for (; e; e = cdr(e))
-			if (!ap(car(e)))
-				evca(g, e);
-	} else
-		for (e = ex; e; e = cdr(e))
-			if (car(e) == tag) {
-				e = cdr(e);
-				goto again;
-			}
-	unwind(g, cdr(dyns));
-	return 0;
+
+lval eval_tagbody(lval * f, lval ex) {
+  jmp_buf jmp;
+  lval tag;
+  lval e;
+  NF(2) T = U = 0;
+  U = ms(g, 1, 52, &jmp);
+  dyns = cons(g, U, dyns);
+  for (e = ex; e; e = cdr(e))
+    if (ap(car(e))) {
+      T = cons(g, dyns, U);
+      NE = cons(g, cons(g, cons(g, car(e), 48), T), NE);
+    } e = ex;
+ again:
+  if (!(tag = setjmp(jmp))) {
+    for (; e; e = cdr(e))
+      if (!ap(car(e)))
+	evca(g, e);
+  } else
+    for (e = ex; e; e = cdr(e))
+      if (car(e) == tag) {
+	e = cdr(e);
+	goto again;
+      }
+  unwind(g, cdr(dyns));
+  return 0;
 }
+
 lval eval_go(lval * f, lval ex) {
-	lval b = *binding(f, car(ex), 3, 0);
-	if (o2s(cdr(b))[2]) {
-		unwind(f, car(b));
-		longjmp(*(jmp_buf *) (o2s(cdr(b))[2]), car(ex));
-	} dbgr(f, 9, car(ex), &ex);
-	longjmp(top_jmp, 1);
+  lval b = *binding(f, car(ex), 3, 0);
+  if (o2s(cdr(b))[2]) {
+    unwind(f, car(b));
+    longjmp(*(jmp_buf *) (o2s(cdr(b))[2]), car(ex));
+  } dbgr(f, 9, car(ex), &ex);
+  longjmp(top_jmp, 1);
 }
-lval eval_block(lval * f, lval ex)
-{
-	jmp_buf jmp;
-	lval vs;
-	NF(2) T = U = 0;
-	T = ms(g, 1, 52, &jmp);
-	U = cons(g, dyns, T);
-	dyns = cons(g, T, dyns);
-	NE = cons(g, cons(g, cons(g, car(ex), 64), U), NE);
-	if (!(vs = setjmp(jmp))) {
-		T = eval_body(g, cdr(ex));
-		unwind(g, cdr(dyns));
-		return T;
-	}
-	return mvalues(car(vs));
+
+lval eval_block(lval * f, lval ex) {
+  jmp_buf jmp;
+  lval vs;
+  NF(2) T = U = 0;
+  T = ms(g, 1, 52, &jmp);
+  U = cons(g, dyns, T);
+  dyns = cons(g, T, dyns);
+  NE = cons(g, cons(g, cons(g, car(ex), 64), U), NE);
+  if (!(vs = setjmp(jmp))) {
+    T = eval_body(g, cdr(ex));
+    unwind(g, cdr(dyns));
+    return T;
+  }
+  return mvalues(car(vs));
 }
-lval eval_return_from(lval * f, lval ex)
-{
-	lval b;
-	jmp_buf *jmp;
-	NF(1) T = 0;
-	b = *binding(g, car(ex), 4, 0);
-	jmp = (jmp_buf *) o2s(cdr(b))[2];
-	if (jmp) {
-		unwind(g, car(b));
-		T = rvalues(g, evca(g, cdr(ex)));
-		longjmp(*jmp, cons(g, T, 0));
-	} dbgr(g, 8, car(ex), &T);
-	longjmp(top_jmp, 1);
+
+lval eval_return_from(lval * f, lval ex) {
+  lval b;
+  jmp_buf *jmp;
+  NF(1) T = 0;
+  b = *binding(g, car(ex), 4, 0);
+  jmp = (jmp_buf *) o2s(cdr(b))[2];
+  if (jmp) {
+    unwind(g, car(b));
+    T = rvalues(g, evca(g, cdr(ex)));
+    longjmp(*jmp, cons(g, T, 0));
+  } dbgr(g, 8, car(ex), &T);
+  longjmp(top_jmp, 1);
 }
-lval eval_catch(lval * f, lval ex)
-{
-	jmp_buf jmp;
-	lval vs;
-	lval oc = dyns;
-	NF(2)
-		T = U = 0;
-	U = evca(g, ex);
-	T = ms(g, 1, 20, &jmp);
-	T = cons(g, U, T);
-	dyns = cons(g, T, dyns);
-	if (!(vs = setjmp(jmp)))
-		vs = eval_body(g, cdr(ex));
-	else
-		vs = mvalues(car(vs));
-	dyns = oc;
-	return vs;
+
+lval eval_catch(lval * f, lval ex) {
+  jmp_buf jmp;
+  lval vs;
+  lval oc = dyns;
+  NF(2)
+    T = U = 0;
+  U = evca(g, ex);
+  T = ms(g, 1, 20, &jmp);
+  T = cons(g, U, T);
+  dyns = cons(g, T, dyns);
+  if (!(vs = setjmp(jmp)))
+    vs = eval_body(g, cdr(ex));
+  else
+    vs = mvalues(car(vs));
+  dyns = oc;
+  return vs;
 }
+
 lval eval_throw(lval * f, lval ex) {
 	lval c;
 	NF(1) T = 0;
