@@ -810,7 +810,7 @@ lval eval_return_from(lval * f, lval ex) {
 
 
 
-  // jmp = (jmp_buf *) o2s(cdr(b))[2];
+    jmp = (jmp_buf *) function_pointer;
 
 
 
