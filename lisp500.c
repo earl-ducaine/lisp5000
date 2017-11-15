@@ -758,11 +758,26 @@ lval eval_go(lval * f, lval ex) {
   lval b = *binding(f, car(ex), 3, 0);
   if (o2s(cdr(b))[2]) {
     unwind(f, car(b));
-    void* function_pointer = o2s(cdr(b))[2];
-    longjmp(*(jmp_buf *) (o2s(cdr(b))[2]), car(ex));
+    void* void_pointer = lisp_word_to_c_pointer(o2s(cdr(b))[2]);
+    lval (*function_pointer) () =
+      (lval (*) ()) void_pointer;
+
+    // void* function_pointer = o2s(cdr(b))[2];
+    longjmp(*(jmp_buf *) (function_pointer), car(ex));
   } dbgr(f, 9, car(ex), &ex);
   longjmp(top_jmp, 1);
 }
+
+
+
+
+  /* void* void_pointer = lisp_word_to_c_pointer(o2s(fn)[2]); */
+  /* lval (*function_pointer) () = */
+  /*   (lval (*) ()) void_pointer; */
+  /* return (*function_pointer)(f, f + d + 1); */
+
+
+
 
 lval eval_block(lval * f, lval ex) {
   jmp_buf jmp;
