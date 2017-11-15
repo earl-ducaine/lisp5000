@@ -557,61 +557,63 @@ lval call(lval * f, lval fn, unsigned d) {
 }
 
 lval eval_quote(lval * g, lval ex) {
-	return car(ex);
+  return car(ex);
 }
 
 int specp(lval * f, lval ex, lval s) {
-	for (; ex; ex = cdr(ex))
-		if (ap(caar(ex)) && o2a(caar(ex))[7] == 3 << 3) {
-			lval e = cdar(ex);
-			for (; e; e = cdr(e))
-				if (o2a(caar(e))[7] == 4 << 3) {
-					lval sp = cdar(e);
-					for (; sp; sp = cdr(sp))
-						if (car(sp) == s)
-							return 1;
-				}
-		} else
-			break;
-	return 0;
+  for (; ex; ex = cdr(ex))
+    if (ap(caar(ex)) && o2a(caar(ex))[7] == 3 << 3) {
+      lval e = cdar(ex);
+      for (; e; e = cdr(e))
+	if (o2a(caar(e))[7] == 4 << 3) {
+	  lval sp = cdar(e);
+	  for (; sp; sp = cdr(sp))
+	    if (car(sp) == s)
+	      return 1;
+	}
+    } else
+      break;
+  return 0;
 }
-void unwind(lval * f, lval c)
-{
-	lval e;
-	NF(0) for (; dyns != c; dyns = cdr(dyns))
-		if (ap(car(dyns)))
-			if (o2a(car(dyns))[1] == 52) {
-				NE = o2a(car(dyns))[2];
-				eval_body(g, o2a(car(dyns))[3]);
-			} else
-				for (e = o2a(car(dyns))[2]; e; e = cdr(e))
-					o2a(caar(e))[4] = cdar(e);
-		else
-			o2s(car(dyns))[2] = 0;
+
+void unwind(lval * f, lval c) {
+  lval e;
+  NF(0) for (; dyns != c; dyns = cdr(dyns))
+    if (ap(car(dyns)))
+      if (o2a(car(dyns))[1] == 52) {
+	NE = o2a(car(dyns))[2];
+	eval_body(g, o2a(car(dyns))[3]);
+      } else
+	for (e = o2a(car(dyns))[2]; e; e = cdr(e))
+	  o2a(caar(e))[4] = cdar(e);
+    else
+      o2s(car(dyns))[2] = 0;
 }
+
 lval eval_let(lval * f, lval ex) {
-	lval r;
-	NF(3) T = car(ex);
-	U = E;
-	V = 0;
-	r = ma(g, 1, 84, 0);
-	dyns = cons(g, r, dyns);
-	for (; T; T = cdr(T)) {
-		V = evca(g, cdar(T));
-		if (o2a(caar(T))[8] & 128 || specp(g, cdr(ex), caar(T))) {
-			o2a(r)[2] = cons(g, cons(g, caar(T), V), o2a(r)[2]);
-		} else
-			U = cons(g, cons(g, caar(T), V), U);
-	} for (r = o2a(r)[2]; r; r = cdr(r)) {
-		T = o2a(caar(r))[4];
-		o2a(caar(r))[4] = cdar(r);
-		set_cdr(car(r), T);
-		U = cons(g, cons(g, caar(r), -8), U);
-	} NE = U;
-	T = eval_body(g, cdr(ex));
-	unwind(g, cdr(dyns));
-	return T;
+  lval r;
+  NF(3) T = car(ex);
+  U = E;
+  V = 0;
+  r = ma(g, 1, 84, 0);
+  dyns = cons(g, r, dyns);
+  for (; T; T = cdr(T)) {
+    V = evca(g, cdar(T));
+    if (o2a(caar(T))[8] & 128 || specp(g, cdr(ex), caar(T))) {
+      o2a(r)[2] = cons(g, cons(g, caar(T), V), o2a(r)[2]);
+    } else
+      U = cons(g, cons(g, caar(T), V), U);
+  } for (r = o2a(r)[2]; r; r = cdr(r)) {
+    T = o2a(caar(r))[4];
+    o2a(caar(r))[4] = cdar(r);
+    set_cdr(car(r), T);
+    U = cons(g, cons(g, caar(r), -8), U);
+  } NE = U;
+  T = eval_body(g, cdr(ex));
+  unwind(g, cdr(dyns));
+  return T;
 }
+
 lval eval_letm(lval * f, lval ex) {
 	lval r;
 	NF(2) T = U = 0;
