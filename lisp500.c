@@ -1090,7 +1090,7 @@ lval liref(lval* f) {
   if (o2u(f[2]) >= o2a(f[1])[0] / 256 + 2) {
     write(1, "out of bounds in iref\n", 22);
   }
-  lval tmp_lval =  (f[1] & ~3);
+  lval* tmp_lval =  lisp_word_to_c_pointer((f[1] & ~3));
   return ((lval *) (tmp_lval))[o2u(f[2])] & ~4;
   // return ((lval *) (f[1] & ~3))[o2u(f[2])] & ~4;
 }
