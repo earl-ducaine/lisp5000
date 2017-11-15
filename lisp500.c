@@ -257,7 +257,7 @@ lval *m0(lval * g, int n) {
   lval *m = memf;
   lval *p = 0;
   n = (n + 1) & ~1;
-  for (; m; m = (lval *) m[0]) {
+  for (; m; m = lisp_word_to_c_pointer(m[0])) {
     if (n <= m[1]) {
       if (m[1] == n) {
 	if (p) {
