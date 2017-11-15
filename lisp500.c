@@ -244,7 +244,7 @@ lval gc(lval* f) {
     m += l + 2;
   }
   if (u) {
-    m[-ml] = (lval) memf;
+    m[-ml] = c_pointer_to_lisp_word(memf);
     m[1 - ml] = ml;
     memf = m - ml;
     i += ml;
