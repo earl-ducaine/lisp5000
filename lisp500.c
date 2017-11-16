@@ -253,7 +253,7 @@ lval gc(lval* f) {
   return 0;
 }
 
-lval *m0(lval * g, int n) {
+lval* m0(lval* g, int n) {
   lval *m = memf;
   lval *p = 0;
   n = (n + 1) & ~1;
@@ -1458,7 +1458,7 @@ lval lhash(lval * f) {
   return d2o(f, hash(f[1]));
 }
 
-lval is(lval * g, lval p, lval s) {
+lval intern_symbol(lval * g, lval p, lval s) {
   int h = hash(s) % 1021;
   int i = 3;
   lval m;
@@ -1525,9 +1525,9 @@ lval lread(lval * g) {
   return is(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
 }
 
-lval strf(lval * f, const char *s) {
+lval strf(lval* f, const char* s) {
   int j = strlen(s);
-  lval *str = ms0(f, j);
+  lval* str = ms0(f, j);
   str[1] = 20;
   for (j++; j; j--)
     ((char *) str)[7 + j] = s[j - 1];
