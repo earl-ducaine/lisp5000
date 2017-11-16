@@ -17,7 +17,7 @@
 
 #include "defs.h"
 
-lval strf(lval * f, const char *s);
+lval c_string_to_stack_argument(lval * f, const char *s);
 lval lread(lval*);
 lval evca(lval *, lval);
 int dbgr(lval *, int, lval, lval *);
