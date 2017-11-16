@@ -8,12 +8,6 @@
 
 #include "defs.h"
 
-typedef struct
-{
-  int a;
-  int b;
-} myStruct;
-
 // must be at least 32bits
 uintptr_t SUGGESTED_MEM_LOCATION_REGION_A = 0x80000000;
 uintptr_t mem_region_a = 0;
@@ -33,10 +27,4 @@ void* alocate_memory(void* suggested_mem_location, uintptr_t size_in_bytes) {
     entry[0] = 4;
     printf("Success: entry=%p, entry->a = %d\n", entry, entry[0]);
   }
-}
-
-int main() {
-  mem_region_a = (uintptr_t)alocate_memory((void*)SUGGESTED_MEM_LOCATION_REGION_A,
-					   1024);
-  return 0;
 }
