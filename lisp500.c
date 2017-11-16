@@ -21,6 +21,7 @@ lval c_string_to_stack_argument(lval * f, const char *s);
 lval lread(lval*);
 lval evca(lval *, lval);
 int dbgr(lval *, int, lval, lval *);
+lval args(lval *, lval, int);
 
 lval* memory;
 lval* memf;
@@ -369,15 +370,15 @@ unsigned o2u(lval o) {
 }
 
 lval cons(lval * g, lval a, lval d) {
-	lval *c = allocate_memory(g, 2);
-	if (!c) {
-		gcm(a);
-		gcm(d);
-		gc(g);
-		c = allocate_memory(g, 2);
-	} c[0] = a;
-	c[1] = d;
-	return c2o(c);
+  lval *c = allocate_memory(g, 2);
+  if (!c) {
+    gcm(a);
+    gcm(d);
+    gc(g);
+    c = allocate_memory(g, 2);
+  } c[0] = a;
+  c[1] = d;
+  return c2o(c);
 }
 
 int string_equal_do(lval a, lval b) {
@@ -389,9 +390,9 @@ int string_equal_do(lval a, lval b) {
 }
 
 int string_equal(lval a, lval b) {
-	return a == b || (sp(a) && sp(b) &&
-		o2s(a)[1] == 20 && o2s(b)[1] == 20 && o2s(a)[0] == o2s(b)[0]
-			  && string_equal_do(a, b));
+  return a == b || (sp(a) && sp(b) &&
+		    o2s(a)[1] == 20 && o2s(b)[1] == 20 && o2s(a)[0] == o2s(b)[0]
+		    && string_equal_do(a, b));
 }
 
 lval argi(lval a, lval * b) {
@@ -402,17 +403,16 @@ lval argi(lval a, lval * b) {
 	*b = 0;
 	return a;
 }
-lval rest(lval * h, lval * g)
-{
+
+lval rest(lval * h, lval * g) {
 	lval *f = h - 1;
 	lval r = 0;
 	for (; f >= g; f--)
 		r = cons(h, *f, r);
 	return r;
 }
-lval args(lval *, lval, int);
-lval argd(lval * f, lval n, lval a)
-{
+
+lval argd(lval * f, lval n, lval a) {
 	if (cp(n)) {
 		lval *h = f;
 		for (; a; a = cdr(a))
