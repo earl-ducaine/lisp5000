@@ -254,7 +254,8 @@ lval gc(lval* f) {
   return 0;
 }
 
-lval* m0(lval* g, int n) {
+// Base memory allocation from allocated memory region.
+lval* allocate_memory(lval* g, int n) {
   lval *m = memf;
   lval *p = 0;
   n = (n + 1) & ~1;
@@ -279,7 +280,7 @@ lval* m0(lval* g, int n) {
 
 lval *ma0(lval * g, int n) {
 	lval *m;
-st:	m = m0(g, n + 2);
+st:	m = allocate_memory(g, n + 2);
 	if (!m) {
 		gc(g);
 		goto st;
@@ -292,7 +293,7 @@ st:	m = m0(g, n + 2);
 // n: Nnumber of characters to alocate
 lval* allocate_string_memory(lval* g, int n) {
   lval* m;
- st:	m = m0(g, (n + 12) / 4);
+ st:	m = allocate_memory(g, (n + 12) / 4);
   if (!m) {
     gc(g);
     goto st;
@@ -302,7 +303,7 @@ lval* allocate_string_memory(lval* g, int n) {
 
 lval *mb0(lval * g, int n) {
 	lval *m;
-st:	m = m0(g, (n + 95) / 32);
+st:	m = allocate_memory(g, (n + 95) / 32);
 	if (!m) {
 		gc(g);
 		goto st;
@@ -316,7 +317,7 @@ lval ma(lval * g, int n,...) {
 	int i;
 	lval *m;
 st:	va_start(v, n);
-	m = m0(g, n + 2);
+	m = allocate_memory(g, n + 2);
 	if (!m) {
 		for (i = -1; i < n; i++)
 			gcm(va_arg(v, lval));
@@ -334,7 +335,7 @@ lval ms(lval * g, int n,...) {
 	int i;
 	lval *m;
 st:	va_start(v, n);
-	m = m0(g, n + 2);
+	m = allocate_memory(g, n + 2);
 	if (!m) {
 		gc(g);
 		goto st;
@@ -368,12 +369,12 @@ unsigned o2u(lval o) {
 }
 
 lval cons(lval * g, lval a, lval d) {
-	lval *c = m0(g, 2);
+	lval *c = allocate_memory(g, 2);
 	if (!c) {
 		gcm(a);
 		gcm(d);
 		gc(g);
-		c = m0(g, 2);
+		c = allocate_memory(g, 2);
 	} c[0] = a;
 	c[1] = d;
 	return c2o(c);
