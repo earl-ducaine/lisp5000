@@ -17,10 +17,11 @@
 
 #include "defs.h"
 
-lval strf(lval * f, const char *s);
+lval c_string_to_stack_argument(lval * f, const char *s);
 lval lread(lval*);
 lval evca(lval *, lval);
 int dbgr(lval *, int, lval, lval *);
+lval args(lval *, lval, int);
 
 lval* memory;
 lval* memf;
@@ -32,6 +33,7 @@ jmp_buf top_jmp;
 lval pkg;
 lval pkgs;
 lval kwp = 0;
+FILE *ins;
 
 extern struct symbol_init symi[];
 
@@ -91,10 +93,11 @@ lval* o2s(lval o) {
 }
 
 char* o2z(lval o) {
-  return (char*) (o - 3 + (2 * sizeof(lval)));
+  lval adjusted_o = o + (2 * sizeof(lval)) - 3 ;
+  return (char*) lisp_word_to_c_pointer(adjusted_o);
 }
 
-lval s2o(lval * s) {
+lval s2o(lval* s) {
   return c_pointer_to_lisp_word(s) + 3;
 }
 
@@ -253,7 +256,8 @@ lval gc(lval* f) {
   return 0;
 }
 
-lval *m0(lval * g, int n) {
+// Base memory allocation from allocated memory region.
+lval* allocate_memory(lval* g, int n) {
   lval *m = memf;
   lval *p = 0;
   n = (n + 1) & ~1;
@@ -278,7 +282,7 @@ lval *m0(lval * g, int n) {
 
 lval *ma0(lval * g, int n) {
 	lval *m;
-st:	m = m0(g, n + 2);
+st:	m = allocate_memory(g, n + 2);
 	if (!m) {
 		gc(g);
 		goto st;
@@ -286,19 +290,22 @@ st:	m = m0(g, n + 2);
 	return m;
 }
 
-lval *ms0(lval * g, int n) {
-	lval *m;
-st:	m = m0(g, (n + 12) / 4);
-	if (!m) {
-		gc(g);
-		goto st;
-	} *m = (n + 4) << 6;
-	return m;
+// allocate string memory
+// g: Memory location
+// n: Nnumber of characters to alocate
+lval* allocate_string_memory(lval* g, int n) {
+  lval* m;
+ st:	m = allocate_memory(g, (n + 12) / 4);
+  if (!m) {
+    gc(g);
+    goto st;
+  } *m = (n + 4) << 6;
+  return m;
 }
 
 lval *mb0(lval * g, int n) {
 	lval *m;
-st:	m = m0(g, (n + 95) / 32);
+st:	m = allocate_memory(g, (n + 95) / 32);
 	if (!m) {
 		gc(g);
 		goto st;
@@ -312,7 +319,7 @@ lval ma(lval * g, int n,...) {
 	int i;
 	lval *m;
 st:	va_start(v, n);
-	m = m0(g, n + 2);
+	m = allocate_memory(g, n + 2);
 	if (!m) {
 		for (i = -1; i < n; i++)
 			gcm(va_arg(v, lval));
@@ -330,7 +337,7 @@ lval ms(lval * g, int n,...) {
 	int i;
 	lval *m;
 st:	va_start(v, n);
-	m = m0(g, n + 2);
+	m = allocate_memory(g, n + 2);
 	if (!m) {
 		gc(g);
 		goto st;
@@ -364,15 +371,15 @@ unsigned o2u(lval o) {
 }
 
 lval cons(lval * g, lval a, lval d) {
-	lval *c = m0(g, 2);
-	if (!c) {
-		gcm(a);
-		gcm(d);
-		gc(g);
-		c = m0(g, 2);
-	} c[0] = a;
-	c[1] = d;
-	return c2o(c);
+  lval *c = allocate_memory(g, 2);
+  if (!c) {
+    gcm(a);
+    gcm(d);
+    gc(g);
+    c = allocate_memory(g, 2);
+  } c[0] = a;
+  c[1] = d;
+  return c2o(c);
 }
 
 int string_equal_do(lval a, lval b) {
@@ -384,9 +391,9 @@ int string_equal_do(lval a, lval b) {
 }
 
 int string_equal(lval a, lval b) {
-	return a == b || (sp(a) && sp(b) &&
-		o2s(a)[1] == 20 && o2s(b)[1] == 20 && o2s(a)[0] == o2s(b)[0]
-			  && string_equal_do(a, b));
+  return a == b || (sp(a) && sp(b) &&
+		    o2s(a)[1] == 20 && o2s(b)[1] == 20 && o2s(a)[0] == o2s(b)[0]
+		    && string_equal_do(a, b));
 }
 
 lval argi(lval a, lval * b) {
@@ -397,17 +404,16 @@ lval argi(lval a, lval * b) {
 	*b = 0;
 	return a;
 }
-lval rest(lval * h, lval * g)
-{
+
+lval rest(lval * h, lval * g) {
 	lval *f = h - 1;
 	lval r = 0;
 	for (; f >= g; f--)
 		r = cons(h, *f, r);
 	return r;
 }
-lval args(lval *, lval, int);
-lval argd(lval * f, lval n, lval a)
-{
+
+lval argd(lval * f, lval n, lval a) {
 	if (cp(n)) {
 		lval *h = f;
 		for (; a; a = cdr(a))
@@ -833,20 +839,27 @@ lval eval_catch(lval * f, lval ex) {
 }
 
 lval eval_throw(lval * f, lval ex) {
-	lval c;
-	NF(1) T = 0;
-	T = evca(g, ex);
-st:
-	for (c = dyns; c; c = cdr(c))
-		if (cp(car(c)) && caar(c) == T) {
-			unwind(g, c);
-			T = evca(g, cdr(ex));
-			T = rvalues(g, T);
-			longjmp(*(jmp_buf *) (o2s(cdar(c))[2]), cons(g, T, 0));
-		}
-	dbgr(g, 5, T, &T);
-	goto st;
+  lval c;
+  NF(1) T = 0;
+  T = evca(g, ex);
+ st:
+  for (c = dyns; c; c = cdr(c))
+    if (cp(car(c)) && caar(c) == T) {
+      unwind(g, c);
+      T = evca(g, cdr(ex));
+      T = rvalues(g, T);
+      void* void_pointer = lisp_word_to_c_pointer(o2s(cdar(c))[2]);
+      longjmp(*(jmp_buf*) (void_pointer), cons(g, T, 0));
+      // longjmp(*(jmp_buf*) (o2s(cdar(c))[2]), cons(g, T, 0));
+    }
+  dbgr(g, 5, T, &T);
+  goto st;
 }
+
+  /* void* void_pointer = lisp_word_to_c_pointer(o2s(cdr(b))[2]); */
+  /* lval (*function_pointer) () = */
+  /*   (lval (*) ()) void_pointer; */
+  /*   jmp = (jmp_buf *) function_pointer; */
 
 lval eval_unwind_protect(lval * f, lval ex) {
 	NF(1) T = 0;
@@ -1013,7 +1026,7 @@ lval lfloor(lval * f, lval * h) {
 }
 int gensymc = 0;
 lval lgensym(lval * f) {
-	lval *r = ms0(f, 4);
+	lval *r = allocate_string_memory(f, 4);
 	r[1] = 20;
 	sprintf((char *) (r + 2),
 		"g%3.3d", gensymc++);
@@ -1041,7 +1054,7 @@ lval stringify(lval * f, lval l)
 	lval t = l;
 	*++f = l;
 	for (i = 0; t; i++, t = cdr(t));
-	r = ms0(f, i);
+	r = allocate_string_memory(f, i);
 	r[1] = 20;
 	((char *) r)[i + 8] = 0;
 	for (i = 8; l; i++, l = cdr(l))
@@ -1051,35 +1064,41 @@ lval stringify(lval * f, lval l)
 lval lstring(lval * f, lval * h) {
 	return stringify(f, rest(h, f + 1));
 }
+
 lval lival(lval * f) {
-	return d2o(f, f[1]);
+  return d2o(f, f[1]);
 }
+
 lval lmakei(lval * f, lval * h) {
-	int i = 2;
-	int l = o2i(f[1]);
-	lval *r = ma0(h, l);
-	r[1] = f[2] | 4;
-	memset(r + 2, 0, 4 * o2i(f[1]));
-	for (f += 3; f < h; f++, i++) {
-		if (i >= l + 2)
-			printf("overinitializing in makei\n");
-		r[i] = *f;
-	}
-	return a2o(r);
+  int i = 2;
+  int l = o2i(f[1]);
+  lval *r = ma0(h, l);
+  r[1] = f[2] | 4;
+  memset(r + 2, 0, 4 * o2i(f[1]));
+  for (f += 3; f < h; f++, i++) {
+    if (i >= l + 2)
+      printf("overinitializing in makei\n");
+    r[i] = *f;
+  }
+  return a2o(r);
 }
-lval liboundp(lval * f)
-{
-	return o2a(f[1])[o2u(f[2])] == 8 ? 0 : TRUE;
+
+lval liboundp(lval * f) {
+  return o2a(f[1])[o2u(f[2])] == 8 ? 0 : TRUE;
 }
-lval limakunbound(lval * f)
-{
-	o2a(f[1])[o2u(f[2])] = 8;
-	return 0;
+
+lval limakunbound(lval * f) {
+  o2a(f[1])[o2u(f[2])] = 8;
+  return 0;
 }
-lval liref(lval * f) {
-	if (o2u(f[2]) >= o2a(f[1])[0] / 256 + 2)
-		write(1, "out of bounds in iref\n", 22);
-	return ((lval *) (f[1] & ~3))[o2u(f[2])] & ~4;
+
+lval liref(lval* f) {
+  if (o2u(f[2]) >= o2a(f[1])[0] / 256 + 2) {
+    write(1, "out of bounds in iref\n", 22);
+  }
+  lval* tmp_lval =  lisp_word_to_c_pointer(f[1] & ~3);
+  return (tmp_lval)[o2u(f[2])] & ~4;
+  // return ((lval *) (f[1] & ~3))[o2u(f[2])] & ~4;
 }
 
 lval setfiref(lval * f) {
@@ -1087,7 +1106,9 @@ lval setfiref(lval * f) {
   if (i >= o2a(f[2])[0] / 256 + 2) {
     printf("out of bounds in setf iref\n");
   }
-  return ((lval *) (f[2] & ~3))[i] = i == 1 ? f[1] | 4 : f[1];
+  lval* tmp_lval =  lisp_word_to_c_pointer(f[2] & ~3);
+  return (tmp_lval)[i] = i == 1 ? f[1] | 4 : f[1];
+  // return ((lval *) (f[2] & ~3))[i] = i == 1 ? f[1] | 4 : f[1];
 }
 
 lval lmakej(lval * f) {
@@ -1155,13 +1176,12 @@ lval lfasl(lval * f) {
 lval luname(lval* f) {
 	struct utsname un;
 	uname(&un);
-	f[1] = cons(f + 1, strf(f + 1, un.machine), 0);
-	f[1] = cons(f + 1, strf(f + 1, un.version), f[1]);
-	f[1] = cons(f + 1, strf(f + 1, un.release), f[1]);
-	return cons(f + 1, strf(f, un.sysname), f[1]);
+	f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.machine), 0);
+	f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.version), f[1]);
+	f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.release), f[1]);
+	return cons(f + 1, c_string_to_stack_argument(f, un.sysname), f[1]);
 }
 
-FILE *ins;
 void load(lval * f, char *s) {
 	lval r;
 	FILE *oldins = ins;
@@ -1443,7 +1463,7 @@ lval lhash(lval * f) {
   return d2o(f, hash(f[1]));
 }
 
-lval is(lval * g, lval p, lval s) {
+lval intern_symbol(lval * g, lval p, lval s) {
   int h = hash(s) % 1021;
   int i = 3;
   lval m;
@@ -1507,12 +1527,14 @@ lval lread(lval * g) {
     return d2o(g, d);
   } if (c == ':')
       getnws();
-  return is(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
+  return intern_symbol(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
 }
 
-lval strf(lval * f, const char *s) {
+// Create lisp string object and store object on stack, return the
+// lisp object as lisp word.
+lval c_string_to_stack_argument(lval* f, const char* s) {
   int j = strlen(s);
-  lval *str = ms0(f, j);
+  lval* str = allocate_string_memory(f, j);
   str[1] = 20;
   for (j++; j; j--)
     ((char *) str)[7 + j] = s[j - 1];
@@ -1530,7 +1552,10 @@ lval mkv(lval * f) {
 
 lval mkp(lval * f, const char *s0, const char *s1) {
   return ma(f, 6, 180,
-	    l2(f, strf(f, s0), strf(f, s1)), mkv(f), mkv(f), 0, 0, 0);
+	    l2(f, c_string_to_stack_argument(f, s0),
+	       c_string_to_stack_argument(f, s1)),
+	    mkv(f),
+	    mkv(f), 0, 0, 0);
 }
 
 lval lrp(lval * f, lval * h) {
@@ -1564,7 +1589,7 @@ int main(int argc, char *argv[]) {
   g = stack + 5;
   pkg = mkp(g, "CL", "COMMON-LISP");
   for (i = 0; i < 88; i++) {
-    sym = is(g, pkg, strf(g, symi[i].name));
+    sym = intern_symbol(g, pkg, c_string_to_stack_argument(g, symi[i].name));
     if (i < 10) {
       o2a(sym)[4] = sym;
     }
