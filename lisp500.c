@@ -1579,7 +1579,7 @@ int main(int argc, char *argv[]) {
   g = stack + 5;
   pkg = mkp(g, "CL", "COMMON-LISP");
   for (i = 0; i < 88; i++) {
-    sym = is(g, pkg, strf(g, symi[i].name));
+    sym = intern_symbol(g, pkg, strf(g, symi[i].name));
     if (i < 10) {
       o2a(sym)[4] = sym;
     }
