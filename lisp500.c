@@ -1522,7 +1522,7 @@ lval lread(lval * g) {
     return d2o(g, d);
   } if (c == ':')
       getnws();
-  return is(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
+  return intern_symbol(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
 }
 
 lval strf(lval* f, const char* s) {
