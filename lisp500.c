@@ -287,14 +287,17 @@ st:	m = m0(g, n + 2);
 	return m;
 }
 
-lval *ms0(lval * g, int n) {
-	lval *m;
-st:	m = m0(g, (n + 12) / 4);
-	if (!m) {
-		gc(g);
-		goto st;
-	} *m = (n + 4) << 6;
-	return m;
+// allocate string memory
+// g: Memory location
+// n: Nnumber of characters to alocate
+lval* allocate_string_memory(lval* g, int n) {
+  lval* m;
+ st:	m = m0(g, (n + 12) / 4);
+  if (!m) {
+    gc(g);
+    goto st;
+  } *m = (n + 4) << 6;
+  return m;
 }
 
 lval *mb0(lval * g, int n) {
@@ -1021,7 +1024,7 @@ lval lfloor(lval * f, lval * h) {
 }
 int gensymc = 0;
 lval lgensym(lval * f) {
-	lval *r = ms0(f, 4);
+	lval *r = allocate_string_memory(f, 4);
 	r[1] = 20;
 	sprintf((char *) (r + 2),
 		"g%3.3d", gensymc++);
@@ -1049,7 +1052,7 @@ lval stringify(lval * f, lval l)
 	lval t = l;
 	*++f = l;
 	for (i = 0; t; i++, t = cdr(t));
-	r = ms0(f, i);
+	r = allocate_string_memory(f, i);
 	r[1] = 20;
 	((char *) r)[i + 8] = 0;
 	for (i = 8; l; i++, l = cdr(l))
@@ -1525,13 +1528,11 @@ lval lread(lval * g) {
   return intern_symbol(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
 }
 
-// c_string_to_stack_argument
-
 // Create lisp string object and store object on stack, return the
 // lisp object as lisp word.
 lval c_string_to_stack_argument(lval* f, const char* s) {
   int j = strlen(s);
-  lval* str = ms0(f, j);
+  lval* str = allocate_string_memory(f, j);
   str[1] = 20;
   for (j++; j; j--)
     ((char *) str)[7 + j] = s[j - 1];
