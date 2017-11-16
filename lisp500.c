@@ -97,7 +97,7 @@ char* o2z(lval o) {
   return (char*) lisp_word_to_c_pointer(adjusted_o);
 }
 
-lval s2o(lval * s) {
+lval s2o(lval* s) {
   return c_pointer_to_lisp_word(s) + 3;
 }
 
