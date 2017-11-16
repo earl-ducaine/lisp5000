@@ -32,6 +32,7 @@ jmp_buf top_jmp;
 lval pkg;
 lval pkgs;
 lval kwp = 0;
+FILE *ins;
 
 extern struct symbol_init symi[];
 
@@ -1170,13 +1171,12 @@ lval lfasl(lval * f) {
 lval luname(lval* f) {
 	struct utsname un;
 	uname(&un);
-	f[1] = cons(f + 1, strf(f + 1, un.machine), 0);
-	f[1] = cons(f + 1, strf(f + 1, un.version), f[1]);
-	f[1] = cons(f + 1, strf(f + 1, un.release), f[1]);
-	return cons(f + 1, strf(f, un.sysname), f[1]);
+	f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.machine), 0);
+	f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.version), f[1]);
+	f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.release), f[1]);
+	return cons(f + 1, c_string_to_stack_argument(f, un.sysname), f[1]);
 }
 
-FILE *ins;
 void load(lval * f, char *s) {
 	lval r;
 	FILE *oldins = ins;
@@ -1525,7 +1525,11 @@ lval lread(lval * g) {
   return intern_symbol(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
 }
 
-lval strf(lval* f, const char* s) {
+// c_string_to_stack_argument
+
+// Create lisp string object and store object on stack, return the
+// lisp object as lisp word.
+lval c_string_to_stack_argument(lval* f, const char* s) {
   int j = strlen(s);
   lval* str = ms0(f, j);
   str[1] = 20;
@@ -1545,7 +1549,10 @@ lval mkv(lval * f) {
 
 lval mkp(lval * f, const char *s0, const char *s1) {
   return ma(f, 6, 180,
-	    l2(f, strf(f, s0), strf(f, s1)), mkv(f), mkv(f), 0, 0, 0);
+	    l2(f, c_string_to_stack_argument(f, s0),
+	       c_string_to_stack_argument(f, s1)),
+	    mkv(f),
+	    mkv(f), 0, 0, 0);
 }
 
 lval lrp(lval * f, lval * h) {
@@ -1579,7 +1586,7 @@ int main(int argc, char *argv[]) {
   g = stack + 5;
   pkg = mkp(g, "CL", "COMMON-LISP");
   for (i = 0; i < 88; i++) {
-    sym = intern_symbol(g, pkg, strf(g, symi[i].name));
+    sym = intern_symbol(g, pkg, c_string_to_stack_argument(g, symi[i].name));
     if (i < 10) {
       o2a(sym)[4] = sym;
     }
