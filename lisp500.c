@@ -1391,44 +1391,47 @@ int dbgr(lval * f, int x, lval val, lval * vp)
 			ep(h, ex);
 	}
 }
-lval evca(lval * f, lval co) {
-	lval ex = car(co);
-	lval x = ex;
-	int m;
-ag:	xvalues = 8;
-	if (cp(ex)) {
-		lval fn = 8;
-		if (ap(car(ex)) && o2a(car(ex))[1] == 20) {
-			int i = o2a(car(ex))[7] >> 3;
-			if (i > 11 && i < 34)
-				return symi[i].fun(f, cdr(ex));
-			fn = *binding(f, car(ex), 1, &m);
-			if (m) {
-				lval *g = f + 1;
-				for (ex = cdr(ex); ex; ex = cdr(ex))
-					*++g = car(ex);
-				x = ex = call(f, fn, g - f - 1);
-				set_car(co, ex);
-				goto ag;
-			}
-} st:		if (fn == 8) {
-			if (dbgr(f, 1, car(ex), &fn))
-				return fn;
-			else
-				goto st;
-		} ex = cdr(ex);
-		ex = call(f, fn, map_eval(f, ex));
-	} else if (ap(ex) && o2a(ex)[1] == 20) {
-		ex = *binding(f, ex, 0, &m);
-		if (m) {
-			x = ex;
-			set_car(co, ex);
-			goto ag;
-		}
-		if (ex == 8)
-			dbgr(f, 0, x, &ex);
-	} return ex == -8 ? o2a(x)[4] : ex;
+
+lval evca(lval* f, lval co) {
+  lval ex = car(co);
+  lval x = ex;
+  int m;
+ ag:
+  xvalues = 8;
+  if (cp(ex)) {
+    lval fn = 8;
+    if (ap(car(ex)) && o2a(car(ex))[1] == 20) {
+      int i = o2a(car(ex))[7] >> 3;
+      if (i > 11 && i < 34)
+	return symi[i].fun(f, cdr(ex));
+      fn = *binding(f, car(ex), 1, &m);
+      if (m) {
+	lval *g = f + 1;
+	for (ex = cdr(ex); ex; ex = cdr(ex))
+	  *++g = car(ex);
+	x = ex = call(f, fn, g - f - 1);
+	set_car(co, ex);
+	goto ag;
+      }
+    } st:		if (fn == 8) {
+      if (dbgr(f, 1, car(ex), &fn))
+	return fn;
+      else
+	goto st;
+    } ex = cdr(ex);
+    ex = call(f, fn, map_eval(f, ex));
+  } else if (ap(ex) && o2a(ex)[1] == 20) {
+    ex = *binding(f, ex, 0, &m);
+    if (m) {
+      x = ex;
+      set_car(co, ex);
+      goto ag;
+    }
+    if (ex == 8)
+      dbgr(f, 0, x, &ex);
+  } return ex == -8 ? o2a(x)[4] : ex;
 }
+
 int getnws() {
 	int c;
 	do
@@ -1599,7 +1602,7 @@ int main(int argc, char *argv[]) {
   memset(memory, 0, memory_size);
   memf[0] = 0;
   memf[1] = memory_size / 4;
-  stack = malloc(256 * 1024);
+  stack = allocate_region(256 * 1024);
   memset(stack, 0, 256 * 1024);
   g = stack + 5;
   pkg = mkp(g, "CL", "COMMON-LISP");
