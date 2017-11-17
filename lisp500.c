@@ -1581,7 +1581,6 @@ int main(int argc, char *argv[]) {
   memory_size = 4 * 2048 * 1024;
   // memory = malloc(memory_size);
   memory = allocate_region((long)memory_size);
-  mem_location
   memf = memory;
   memset(memory, 0, memory_size);
   memf[0] = 0;
