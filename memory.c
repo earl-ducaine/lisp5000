@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <error.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "defs.h"
 
