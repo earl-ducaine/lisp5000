@@ -43,8 +43,8 @@ void* allocate_memory_mmap_internal(void* suggested_mem_location, uintptr_t size
 }
 
 void* allocate_region_mmap(long size_in_bytes) {
-  allocate_memory_mmap_internal((void*)SUGGESTED_MEM_LOCATION_REGION_A,
-				size_in_bytes)
+  return allocate_memory_mmap_internal((void*)SUGGESTED_MEM_LOCATION_REGION_A,
+				       size_in_bytes);
 }
 
 
