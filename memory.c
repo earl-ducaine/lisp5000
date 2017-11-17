@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <error.h>
+#include <stdlib.h>
 
 #include "defs.h"
 
