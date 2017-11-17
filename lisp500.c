@@ -37,22 +37,36 @@ FILE *ins;
 
 extern struct symbol_init symi[];
 
-#define DEBUG 0
+#define DEBUG 1
+
+#if DEBUG
+
+void debug_write(char* debug_string, long arg) {
+  printf(debug_string, arg);
+}
+
+#else
+
+#define debug_write
+
+#endif
 
 // convert lisp word to c pointer
 void* lisp_word_to_c_pointer(lval lisp_word) {
-  uintptr_t c_pointer = (uintptr_t)lisp_word;
-  return (void*) c_pointer;
+  // Because lval is signed (int32_t) we need to chop off the padded
+  // 1s when converting to an address on 64 bit architecture, i.e. we
+  // want:
+  // 0x807fdf9b --> 0x000000000807fdf9b
+  // not
+  // 0x807fdf9b --> 0xFFFFFFFFF807fdf9b
+  uintptr_t uintptr_lisp_word = ((uintptr_t) lisp_word) & 0x00000000FFFFFFFF;
+  // uintptr_t c_pointer = (uintptr_t)lisp_word;
+  return (void*) uintptr_lisp_word;
 }
 
 // object to cons
 lval* o2c(lval o) {
   // return (lval *) (o - 1);
-#if DEBUG
-  printf("(lval *) (o - 1) %lx, lisp_word_to_c_pointer(o - 1);\n",
-  	 (long unsigned)lisp_word,
-  	 (long unsigned) c_pointer);
-#endif
   return lisp_word_to_c_pointer(o - 1);
 }
 
