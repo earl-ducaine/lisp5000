@@ -19,4 +19,8 @@ struct symbol_init {
   lval sym;
 };
 
+void* allocate_region_malloc(long size_in_bytes);
+
+#define allocate_region_malloc allocate_region
+
 #endif

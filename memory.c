@@ -15,10 +15,8 @@
 uintptr_t SUGGESTED_MEM_LOCATION_REGION_A = 0x80000000;
 uintptr_t mem_region_a = 0;
 
-
-
 // malloc based memory allocation
-void* alocate_region_malloc(long size_in_bytes) {
+void* allocate_region_malloc(long size_in_bytes) {
   void* mem_location = malloc(size_in_bytes);
   if (!mem_location) {
     int error_save = errno;
@@ -28,7 +26,7 @@ void* alocate_region_malloc(long size_in_bytes) {
 }
 
 // malloc based memory allocation
-void* alocate_memory_mmap(void* suggested_mem_location, uintptr_t size_in_bytes) {
+void* allocate_memory_mmap(void* suggested_mem_location, uintptr_t size_in_bytes) {
   void* mem_location =
     (void*)mmap(suggested_mem_location, size_in_bytes * sizeof(lval),
 		    PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
