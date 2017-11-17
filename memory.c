@@ -12,7 +12,7 @@
 #include "defs.h"
 
 // must be at least 32bits
-uintptr_t SUGGESTED_MEM_LOCATION_REGION_A = 0x80000000;
+const uintptr_t SUGGESTED_MEM_LOCATION_REGION_A = 0x80000000;
 uintptr_t mem_region_a = 0;
 
 // malloc based memory allocation
@@ -43,7 +43,8 @@ void* allocate_memory_mmap_internal(void* suggested_mem_location, uintptr_t size
 }
 
 void* allocate_region_mmap(long size_in_bytes) {
-  allocate_memory_mmap_internal(SUGGESTED_MEM_LOCATION_REGION_A, size_in_bytes)
+  allocate_memory_mmap_internal((void*)SUGGESTED_MEM_LOCATION_REGION_A,
+				size_in_bytes)
 }
 
 
