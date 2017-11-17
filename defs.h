@@ -21,6 +21,6 @@ struct symbol_init {
 
 void* allocate_region_malloc(long size_in_bytes);
 
-#define allocate_region_malloc allocate_region
+#define allocate_region allocate_region_malloc
 
 #endif
