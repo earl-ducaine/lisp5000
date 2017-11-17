@@ -26,7 +26,7 @@ void* allocate_region_malloc(long size_in_bytes) {
 }
 
 // malloc based memory allocation
-void* allocate_memory_mmap(void* suggested_mem_location, uintptr_t size_in_bytes) {
+void* allocate_memory_mmap_internal(void* suggested_mem_location, uintptr_t size_in_bytes) {
   void* mem_location =
     (void*)mmap(suggested_mem_location, size_in_bytes * sizeof(lval),
 		    PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -40,6 +40,10 @@ void* allocate_memory_mmap(void* suggested_mem_location, uintptr_t size_in_bytes
     }
   }
   return mem_location;
+}
+
+void* allocate_region_mmap(long size_in_bytes) {
+  allocate_memory_mmap_internal(size_in_bytes, SUGGESTED_MEM_LOCATION_REGION_A)
 }
 
 

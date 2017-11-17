@@ -20,7 +20,8 @@ struct symbol_init {
 };
 
 void* allocate_region_malloc(long size_in_bytes);
+void* allocate_region_mmap(long size_in_bytes);
 
-#define allocate_region allocate_region_malloc
+#define allocate_region allocate_region_mmap
 
 #endif
