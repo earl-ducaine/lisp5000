@@ -103,7 +103,7 @@ bool ap(lval o) {
 
 //object to string
 lval* o2s(lval o) {
-  return lisp_word_to_c_pointer(o) - 3;
+  return lisp_word_to_c_pointer(o - 3);
 }
 
 char* o2z(lval o) {
