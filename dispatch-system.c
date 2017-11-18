@@ -21,7 +21,8 @@ struct symbols symi[] =
    {"&ALLOW-OTHER-KEYS"},
    // Declarations
    {"DECLARE", eval_declare, -1},
-   {"SPECIAL"}, // functions macros, special forms
+   {"SPECIAL"},
+   // functions macros, special forms
    {"QUOTE", eval_quote, 1},
    {"LET", eval_let, -2},
    {"LET*", eval_letm, -2},

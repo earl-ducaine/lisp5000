@@ -10,7 +10,9 @@ typedef int32_t lval;
 // values only. (Not always clear what 'pure c values' means.
 typedef lval cint_platform;
 
-struct symbols {
+// Structure used to build a table of symbols used to build the
+// initial system.
+struct initial_symbol {
   const char *name;
   lval(*fun) ();
   cint_platform argc;
