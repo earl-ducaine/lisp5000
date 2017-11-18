@@ -384,14 +384,16 @@ unsigned o2u(lval o) {
 	return (unsigned) o2d(o);
 }
 
-lval cons(lval * g, lval a, lval d) {
-  lval *c = allocate_memory(g, 2);
+lval cons(lval* g, lval a, lval d) {
+  lval* c = allocate_memory(g, 2n
+			    );
   if (!c) {
     gcm(a);
     gcm(d);
     gc(g);
     c = allocate_memory(g, 2);
-  } c[0] = a;
+  }
+  c[0] = a;
   c[1] = d;
   return c2o(c);
 }
@@ -1160,236 +1162,236 @@ lval llisten_fs(lval * f) {
 	return select(o2s(f[1])[3] + 1, &r, NULL, NULL, &t) ? TRUE : 0;
 }
 
-lval lread_fs(lval * f) {
-	int l = o2i(f[3]);
-	l = read(o2s(f[1])[3], o2z(f[2]) + l,
-		 (o2s(f[2])[0] >> 6) - 4 - l);
-	return l < 0 ? cons(f, errno, 0) : d2o(f, l);
+lval lread_fs(lval* f) {
+  int l = o2i(f[3]);
+  l = read(o2s(f[1])[3], o2z(f[2]) + l,
+	   (o2s(f[2])[0] >> 6) - 4 - l);
+  return l < 0 ? cons(f, errno, 0) : d2o(f, l);
 }
 
 lval lwrite_fs(lval * f) {
-	int l = o2i(f[3]);
-	l = write(o2s(f[1])[3],
-		  o2z(f[2]) + l, o2i(f[4]) - l);
-	return l < 0 ? cons(f, errno, 0) : d2o(f, l);
+  int l = o2i(f[3]);
+  l = write(o2s(f[1])[3],
+	    o2z(f[2]) + l, o2i(f[4]) - l);
+  return l < 0 ? cons(f, errno, 0) : d2o(f, l);
 }
 
 lval lfinish_fs(lval * f) {
-	fsync(o2s(f[1])[3]);
-	return 0;
+  fsync(o2s(f[1])[3]);
+  return 0;
 }
 
 lval lfasl(lval * f) {
-	void *h;
-	lval(*s) ();
-	h = dlopen(o2z(f[1]), RTLD_NOW);
-	s = dlsym(h, "init");
-	return s(f);
+  void *h;
+  lval(*s) ();
+  h = dlopen(o2z(f[1]), RTLD_NOW);
+  s = dlsym(h, "init");
+  return s(f);
 }
 
 lval luname(lval* f) {
-	struct utsname un;
-	uname(&un);
-	f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.machine), 0);
-	f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.version), f[1]);
-	f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.release), f[1]);
-	return cons(f + 1, c_string_to_stack_argument(f, un.sysname), f[1]);
+  struct utsname un;
+  uname(&un);
+  f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.machine), 0);
+  f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.version), f[1]);
+  f[1] = cons(f + 1, c_string_to_stack_argument(f + 1, un.release), f[1]);
+  return cons(f + 1, c_string_to_stack_argument(f, un.sysname), f[1]);
 }
 
 void load(lval * f, char *s) {
-	lval r;
-	FILE *oldins = ins;
-	ins = fopen(s, "r");
-	if (ins) {
-		do
-			r = eval(f, lread(f));
-		while (r != 8);
-		fclose(ins);
-	}
-	ins = oldins;
+  lval r;
+  FILE *oldins = ins;
+  ins = fopen(s, "r");
+  if (ins) {
+    do
+      r = eval(f, lread(f));
+    while (r != 8);
+    fclose(ins);
+  }
+  ins = oldins;
 }
 lval lload(lval * f) {
-	load(f, o2z(f[1]));
-	return symi[1].sym;
+  load(f, o2z(f[1]));
+  return symi[1].sym;
 }
 lval lstring_equal(lval * f)
 {
-	return string_equal(f[1], f[2]) ? TRUE : 0;
+  return string_equal(f[1], f[2]) ? TRUE : 0;
 }
 lval leval(lval * f, lval * h) {
-	f[-1] = h - f > 2 ? f[2] : 0;
-	return eval(f - 1, f[1]);
+  f[-1] = h - f > 2 ? f[2] : 0;
+  return eval(f - 1, f[1]);
 }
 void psym(lval p, lval n) {
-	int i;
-	if (!p)
-		printf("#:");
-	else if (p != pkg) {
-		lval m = car(o2a(p)[2]);
-		for (i = 0; i < o2s(m)[0] / 64 - 4; i++)
-			putchar(o2z(m)[i]);
-		putchar(':');
-	} for (i = 0; i < o2s(n)[0] / 64 - 4; i++)
-		putchar(o2z(n)[i]);
+  int i;
+  if (!p)
+    printf("#:");
+  else if (p != pkg) {
+    lval m = car(o2a(p)[2]);
+    for (i = 0; i < o2s(m)[0] / 64 - 4; i++)
+      putchar(o2z(m)[i]);
+    putchar(':');
+  } for (i = 0; i < o2s(n)[0] / 64 - 4; i++)
+      putchar(o2z(n)[i]);
 }
 void print(lval x)
 {
-	int i;
-	switch (x & 3) {
-	case 0:
-		if (x)
-			if (x & 8)
-				if (x >> 5 < 256 && isgraph(x >> 5))
-					printf("#\\%c", x >> 5);
-				else
-					printf("#\\U+%d", x >> 5);
-			else
-				printf("%d", x >> 5);
-		else
-			printf("nil");
-		break;
-	case 1:
-		printf("(");
-		print(car(x));
-		for (x = cdr(x); cp(x); x = cdr(x)) {
-			printf(" ");
-			print(car(x));
-		}
-		if (x) {
-			printf(" . ");
-			print(x);
-		} printf(")");
-		break;
-	case 2:
-		switch (o2a(x)[1]) {
-		case 212:
-			printf("#<function ");
-			print(o2a(x)[6]);
-			printf(">");
-			break;
-		case 20:
-			psym(o2a(x)[9], o2a(x)[2]);
-			break;
-		case 116:
-			printf("#(");
-			for (i = 0; i < o2a(x)[0] >> 8; i++) {
-				if (i)
-					printf(" ");
-				print(o2a(x)[i + 2]);
-			} printf(")");
-			break;
-		case 180:
-			printf("#<package ");
-			print(car(o2a(x)[2]));
-			printf(">");
-			break;
-		default:
-			if (ap(o2a(x)[1])) {
-				printf("#<");
-				print(o2a(o2a(o2a(x)[1] - 4)[2])[2]);
-				printf(">");
-			} else {
-				printf("#(");
-				for (i = 0; i <= o2a(x)[0] >> 8; i++)
-					print(o2a(x)[i + 1]);
-				printf(")");
-			}
-		} break;
-	case 3:
-		switch (o2s(x)[1]) {
-		case 20:
-			printf("\"");
-			for (i = 0; i < o2s(x)[0] / 64 - 4; i++) {
-				char c = o2z(x)[i];
-				printf((c == '\\' || c == '\"' ? "\\%c" : "%c"), c);
-			} printf("\"");
-			break;
-		case 84:
-			printf("%g", o2d(x));
-		}
-	}
+  int i;
+  switch (x & 3) {
+  case 0:
+    if (x)
+      if (x & 8)
+	if (x >> 5 < 256 && isgraph(x >> 5))
+	  printf("#\\%c", x >> 5);
+	else
+	  printf("#\\U+%d", x >> 5);
+      else
+	printf("%d", x >> 5);
+    else
+      printf("nil");
+    break;
+  case 1:
+    printf("(");
+    print(car(x));
+    for (x = cdr(x); cp(x); x = cdr(x)) {
+      printf(" ");
+      print(car(x));
+    }
+    if (x) {
+      printf(" . ");
+      print(x);
+    } printf(")");
+    break;
+  case 2:
+    switch (o2a(x)[1]) {
+    case 212:
+      printf("#<function ");
+      print(o2a(x)[6]);
+      printf(">");
+      break;
+    case 20:
+      psym(o2a(x)[9], o2a(x)[2]);
+      break;
+    case 116:
+      printf("#(");
+      for (i = 0; i < o2a(x)[0] >> 8; i++) {
+	if (i)
+	  printf(" ");
+	print(o2a(x)[i + 2]);
+      } printf(")");
+      break;
+    case 180:
+      printf("#<package ");
+      print(car(o2a(x)[2]));
+      printf(">");
+      break;
+    default:
+      if (ap(o2a(x)[1])) {
+	printf("#<");
+	print(o2a(o2a(o2a(x)[1] - 4)[2])[2]);
+	printf(">");
+      } else {
+	printf("#(");
+	for (i = 0; i <= o2a(x)[0] >> 8; i++)
+	  print(o2a(x)[i + 1]);
+	printf(")");
+      }
+    } break;
+  case 3:
+    switch (o2s(x)[1]) {
+    case 20:
+      printf("\"");
+      for (i = 0; i < o2s(x)[0] / 64 - 4; i++) {
+	char c = o2z(x)[i];
+	printf((c == '\\' || c == '\"' ? "\\%c" : "%c"), c);
+      } printf("\"");
+      break;
+    case 84:
+      printf("%g", o2d(x));
+    }
+  }
 }
 lval lprint(lval * f) {
-	print(f[1]);
-	return f[1];
+  print(f[1]);
+  return f[1];
 }
 int ep(lval * g, lval expr) {
-	int i;
-	lval v = rvalues(g, eval(g, expr));
-	if (car(v) == 8)
-		return 0;
-	if (v)
-		for (i = 0; v; v = cdr(v)) {
-			printf(";%d: ", i++);
-			print(car(v));
-			printf("\n");
-		}
-	else
-		printf(";no values\n");
-	return 1;
+  int i;
+  lval v = rvalues(g, eval(g, expr));
+  if (car(v) == 8)
+    return 0;
+  if (v)
+    for (i = 0; v; v = cdr(v)) {
+      printf(";%d: ", i++);
+      print(car(v));
+      printf("\n");
+    }
+  else
+    printf(";no values\n");
+  return 1;
 }
 char *exmsg[] = {"variable unbound", "function unbound",
-	"array index out of bounds", "go tag not bound", "block name not bound",
-	"catch tag not dynamically bound", "too many arguments", "too few arguments",
-"dynamic extent of block exited", "dynamic extent of tagbody exited"};
+		 "array index out of bounds", "go tag not bound", "block name not bound",
+		 "catch tag not dynamically bound", "too many arguments", "too few arguments",
+		 "dynamic extent of block exited", "dynamic extent of tagbody exited"};
 int dbgr(lval * f, int x, lval val, lval * vp)
 {
-	lval ex;
-	int i;
-	lval *h = f;
-	int l = 0;
-	NF(0) ex = o2a(symi[59].sym)[5];
-	if (ex != 8) {
-		h++;
-		*++h = d2o(f, x);
-		*++h = val;
-		ex = call(f, ex, h - f - 1);
-		longjmp(top_jmp, 1);
-	}
-	printf(";exception: %s ", exmsg[x]);
-	if (val)
-		print(val);
-	printf("\n;restarts:\n;[t]oplevel\n;[u]se <form> instead\n;[r]eturn <form> from function\n");
-	while (1) {
-		lval *j;
-		printf(";%d> ", l);
-		ex = lread(g);
-		if (ex == 8)
-			longjmp(top_jmp, 1);
-		if (sp(ex) && o2s(ex)[1] == 84) {
-			for (h = f, l = i = o2i(ex); i; i--) {
-				if (!h[2])
-					break;
-				h = o2a(h[2]);
-			}
-		} else if (ap(ex) && o2a(ex)[1] == 20) {
-			switch (o2z(o2a(ex)[2])[0]) {
-			case 'B':
-				printf(";backtrace:\n");
-				j = f;
-				for (i = 0; j; i++) {
-					printf(";%d: ", i);
-					if (j[0] >> 5 == 4) {
-						print(o2a(j[5])[6]);
-						printf(" ");
-						print(j[4]);
-					} printf("\n");
-					if (!j[2])
-						break;
-					j = o2a(j[2]);
-				} break;
-			case 'R':
-				*vp = eval(g, lread(g));
-				return 1;
-			case 'T':
-				longjmp(top_jmp, 1);
-			case 'U':
-				*vp = eval(g, lread(g));
-				return 0;
-			}
-		} else
-			ep(h, ex);
-	}
+  lval ex;
+  int i;
+  lval *h = f;
+  int l = 0;
+  NF(0) ex = o2a(symi[59].sym)[5];
+  if (ex != 8) {
+    h++;
+    *++h = d2o(f, x);
+    *++h = val;
+    ex = call(f, ex, h - f - 1);
+    longjmp(top_jmp, 1);
+  }
+  printf(";exception: %s ", exmsg[x]);
+  if (val)
+    print(val);
+  printf("\n;restarts:\n;[t]oplevel\n;[u]se <form> instead\n;[r]eturn <form> from function\n");
+  while (1) {
+    lval *j;
+    printf(";%d> ", l);
+    ex = lread(g);
+    if (ex == 8)
+      longjmp(top_jmp, 1);
+    if (sp(ex) && o2s(ex)[1] == 84) {
+      for (h = f, l = i = o2i(ex); i; i--) {
+	if (!h[2])
+	  break;
+	h = o2a(h[2]);
+      }
+    } else if (ap(ex) && o2a(ex)[1] == 20) {
+      switch (o2z(o2a(ex)[2])[0]) {
+      case 'B':
+	printf(";backtrace:\n");
+	j = f;
+	for (i = 0; j; i++) {
+	  printf(";%d: ", i);
+	  if (j[0] >> 5 == 4) {
+	    print(o2a(j[5])[6]);
+	    printf(" ");
+	    print(j[4]);
+	  } printf("\n");
+	  if (!j[2])
+	    break;
+	  j = o2a(j[2]);
+	} break;
+      case 'R':
+	*vp = eval(g, lread(g));
+	return 1;
+      case 'T':
+	longjmp(top_jmp, 1);
+      case 'U':
+	*vp = eval(g, lread(g));
+	return 0;
+      }
+    } else
+      ep(h, ex);
+  }
 }
 
 lval evca(lval* f, lval co) {
@@ -1433,26 +1435,27 @@ lval evca(lval* f, lval co) {
 }
 
 int getnws() {
-	int c;
-	do
-		c = getc(ins);
-	while (isspace(c));
-	return c;
+  int c;
+  do {
+    c = getc(ins);
+  } while (isspace(c));
+  return c;
 }
+
 lval read_list(lval * f) {
-	int c;
-	NF(1) T = 0;
-	c = getnws();
-	if (c == ')')
-		return 0;
-	if (c == '.') {
-		lval r = lread(g);
-		getnws();
-		return r;
-	}
-	ungetc(c, ins);
-	T = lread(g);
-	return cons(g, T, read_list(g));
+  int c;
+  NF(1) T = 0;
+  c = getnws();
+  if (c == ')')
+    return 0;
+  if (c == '.') {
+    lval r = lread(g);
+    getnws();
+    return r;
+  }
+  ungetc(c, ins);
+  T = lread(g);
+  return cons(g, T, read_list(g));
 }
 
 lval read_string_list(lval * g) {
@@ -1499,14 +1502,16 @@ lval intern_symbol(lval * g, lval p, lval s) {
   return m;
 }
 
-lval read_symbol(lval * g) {
+lval read_symbol(lval* g) {
   int c = getc(ins);
   if (isspace(c) || c == ')' || c == EOF) {
     if (c != EOF)
       ungetc(c, ins);
     return 0;
-  } if (c > 96 && c < 123)
+  }
+  if (c > 96 && c < 123) {
       c -= 32;
+  }
   return cons(g, (c << 5) | 24, read_symbol(g));
 }
 
@@ -1514,7 +1519,7 @@ lval list2(lval * g, int a) {
   return l2(g, symi[a].sym, lread(g));
 }
 
-lval lread(lval * g) {
+lval lread(lval* g) {
   int c = getnws();
   if (c == EOF)
     return 8;
@@ -1529,21 +1534,25 @@ lval lread(lval * g) {
     if (c == '\'')
       return list2(g, 20);
     return 0;
-  } if (c == '`')
-      return list2(g, 38);
+  }
+  if (c == '`')
+    return list2(g, 38);
   if (c == ',') {
     c = getnws();
     if (c == '@')
       return list2(g, 40);
     ungetc(c, ins);
     return list2(g, 39);
-  } ungetc(c, ins);
+  }
+  ungetc(c, ins);
   if (isdigit(c)) {
     double d;
     fscanf(ins, "%lf", &d);
     return d2o(g, d);
-  } if (c == ':')
+  }
+  if (c == ':') {
       getnws();
+  }
   return intern_symbol(g, c == ':' ? kwp : pkg, stringify(g, read_symbol(g)));
 }
 
