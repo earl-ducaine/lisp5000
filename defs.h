@@ -21,7 +21,15 @@ struct symbol_init {
 
 void* allocate_region_malloc(long size_in_bytes);
 void* allocate_region_mmap(long size_in_bytes);
+void debug_write(char* debug_string, long arg);
+void debug_write_local(char* debug_string, long arg);
 
 #define allocate_region allocate_region_mmap
+
+#if DEBUG
+#define debug_write(x, f) debug_write_local((x), (f))
+#else
+#define debug_write(x, f)
+#endif
 
 #endif

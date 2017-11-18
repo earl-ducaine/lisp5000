@@ -37,7 +37,8 @@ void* allocate_memory_mmap_internal(void* suggested_mem_location, uintptr_t size
 		PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
 		-1,
 		0);
-  printf("computed_sugested_location: %li", (long)computed_sugested_location);
+  debug_write("computed_sugested_location: %li",
+	      (long)computed_sugested_location);
   allocations++;
   if (mem_location == MAP_FAILED) {
     int error_save = errno;
@@ -55,14 +56,3 @@ void* allocate_region_mmap(long size_in_bytes) {
   return allocate_memory_mmap_internal((void*)SUGGESTED_MEM_LOCATION_REGION_A,
 				       size_in_bytes);
 }
-
-
-
- /* if (somecall() == -1) { */
- /*               int errsv = errno; */
- /*               printf("somecall() failed\n"); */
- /*               if (errsv == ...) { ... } */
- /*           } */
- /*    lval* entry = (lval*)mem_location; */
- /*    entry[0] = 4; */
- /*    printf("Success: entry=%p, entry->a = %d\n", entry, entry[0]); */
