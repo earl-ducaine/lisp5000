@@ -16,6 +16,7 @@
 #include <stdbool.h>
 
 #include "defs.h"
+#include "dispatch-system.h"
 
 lval c_string_to_stack_argument(lval * f, const char *s);
 lval lread(lval*);
@@ -34,8 +35,6 @@ lval pkg;
 lval pkgs;
 lval kwp = 0;
 FILE *ins;
-
-extern struct symbol_init symi[];
 
 #define DEBUG 0
 
@@ -111,7 +110,7 @@ cint_platform sp(lval o) {
   return (o & 3) == 3;
 }
 
-#define TRUE symi[1].sym
+#define TRUE initial_symbols[1].sym
 #define T g[-2]
 #define U g[-3]
 #define V g[-4]
@@ -727,10 +726,10 @@ lval eval_function(lval* f, lval ex) {
   lval x;
   ex = car(ex);
   if (cp(ex))
-    if (car(ex) == symi[75].sym) {
+    if (car(ex) == initial_symbols[75].sym) {
       lval n = 0;
       x = cddr(ex);
-      if (!cdr(x) && caar(x) == symi[23].sym) {
+      if (!cdr(x) && caar(x) == initial_symbols[23].sym) {
 	x = car(x);
 	n = cadr(x);
 	x = cddr(x);
@@ -915,8 +914,9 @@ lval eval_setf(lval* f, lval ex) {
     set_car(ex, r);
     goto ag;
   } r = *binding(g, caar(ex), 2, 0);
-  if (r == 8)
-    dbgr(g, 1, l2(f, symi[33].sym, caar(ex)), &r);
+  if (r == 8) {
+    dbgr(g, 1, l2(f, initial_symbols[33].sym, caar(ex)), &r);
+  }
   T = cons(g, cadr(ex), cdar(ex));
   return call(g, r, map_eval(g, T));
 }
@@ -1216,7 +1216,7 @@ void load(lval* f, char *s) {
 
 lval lload(lval* f) {
   load(f, o2z(f[1]));
-  return symi[1].sym;
+  return initial_symbols[1].sym;
 }
 
 lval lstring_equal(lval* f) {
@@ -1346,7 +1346,7 @@ int dbgr(lval * f, int x, lval val, lval * vp)
   int i;
   lval *h = f;
   int l = 0;
-  NF(0) ex = o2a(symi[59].sym)[5];
+  NF(0) ex = o2a(initial_symbols[59].sym)[5];
   if (ex != 8) {
     h++;
     *++h = d2o(f, x);
@@ -1410,8 +1410,9 @@ lval evca(lval* f, lval co) {
     lval fn = 8;
     if (ap(car(ex)) && o2a(car(ex))[1] == 20) {
       int i = o2a(car(ex))[7] >> 3;
-      if (i > 11 && i < 34)
-	return symi[i].fun(f, cdr(ex));
+      if (i > 11 && i < 34) {
+	return get_initial_dispatchable(initial_symbols[i].function_index)(f, cdr(ex));
+      }
       fn = *binding(f, car(ex), 1, &m);
       if (m) {
 	lval *g = f + 1;
@@ -1524,7 +1525,7 @@ lval read_symbol(lval* g) {
 }
 
 lval list2(lval* g, int a) {
-  return l2(g, symi[a].sym, lread(g));
+  return l2(g, initial_symbols[a].sym, lread(g));
 }
 
 lval lread(lval* g) {
@@ -1624,24 +1625,36 @@ int main(int argc, char *argv[]) {
   g = stack + 5;
   pkg = mkp(g, "CL", "COMMON-LISP");
   for (i = 0; i < 88; i++) {
-    sym = intern_symbol(g, pkg, c_string_to_stack_argument(g, symi[i].name));
+    sym = intern_symbol(g, pkg, c_string_to_stack_argument(g, initial_symbols[i].name));
     if (i < 10) {
       o2a(sym)[4] = sym;
     }
     ins = stdin;
-    symi[i].sym = sym;
-    if (symi[i].fun) {
-      o2a(sym)[5] = ma(g, 5, 212, ms(g, 3, 212, symi[i].fun, 0, -1), 0, 0, 0, sym);
+    initial_symbols[i].sym = sym;
+    if (initial_symbols[i].function_index > 0) {
+      o2a(sym)[5] = ma(g,
+		       5,
+		       212,
+		       ms(g,
+			  3,
+			  212,
+			  get_initial_dispatchable(initial_symbols[i].function_index),
+			  0,
+			  -1),
+		       0,
+		       0,
+		       0,
+		       sym);
     }
-    if (symi[i].setfun)
-      o2a(sym)[6] = ma(g, 5, 212, ms(g, 3, 212, symi[i].setfun, 0, -1), 8, 0, 0, sym);
+    if (initial_symbols[i].function_index > 0)
+      o2a(sym)[6] = ma(g, 5, 212, ms(g, 3, 212, get_initial_dispatchable(initial_symbols[i].setf_function_index), 0, -1), 8, 0, 0, sym);
     o2a(sym)[7] = i << 3;
   }
   kwp = mkp(g, "", "KEYWORD");
-  o2a(symi[81].sym)[4] = pkgs = l2(g, kwp, pkg);
-  o2a(symi[78].sym)[4] = ms(g, 3, 116, 1, 0, 0, 0);
-  o2a(symi[79].sym)[4] = ms(g, 3, 116, 1, 1, TRUE, 0);
-  o2a(symi[80].sym)[4] = ms(g, 3, 116, 1, 2, TRUE, 0);
+  o2a(initial_symbols[81].sym)[4] = pkgs = l2(g, kwp, pkg);
+  o2a(initial_symbols[78].sym)[4] = ms(g, 3, 116, 1, 0, 0, 0);
+  o2a(initial_symbols[79].sym)[4] = ms(g, 3, 116, 1, 1, TRUE, 0);
+  o2a(initial_symbols[80].sym)[4] = ms(g, 3, 116, 1, 2, TRUE, 0);
   for (i = 1; i < argc; i++) {
     load(g, argv[i]);
   }
