@@ -59,7 +59,7 @@ struct initial_symbol initial_symbols[] =
     {"BACKQUOTE"},
     {"UNQUOTE"},
     {"UNQUOTE-SPLICING"},
-    {"IBOUNDP", LIBOUNDP, 2},
+    {"IBOUNDP", IIBOUNDP, 2},
     {"LISTEN-FILE-STREAM", LISTEN_FILE_STREAM, 1},
     {"LIST", LIST, -1},
     {"VALUES", VALUES, -1},
