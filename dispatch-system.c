@@ -109,7 +109,7 @@ struct initial_symbol initial_symbols[] =
     {"UNAME", UNAME, 0}
   };
 
-lval(*initial_dispatchables)() [] =
+lval(*initial_dispatchables[])()  =
   {
     NULL,  // equivelent to PLACEHOLDER_DONT_USE
     eval_declare,
