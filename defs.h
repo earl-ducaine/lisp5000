@@ -99,7 +99,7 @@ lval lstring(lval* f, lval l);
 lval lstring_equal(lval* f, lval l);
 lval ltimes(lval* f, lval l);
 lval luname(lval* f, lval l);
-lval lvalues(lval* f, lval l);
+lval lvalues(lval* f, lval* l);
 lval lwrite_fs(lval* f, lval l);
 lval setfcar(lval* f, lval l);
 lval setfcdr(lval* f, lval l);
