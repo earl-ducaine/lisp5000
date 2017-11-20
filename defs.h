@@ -74,7 +74,7 @@ lval lfasl(lval* f, lval l);
 lval lfinish_fs(lval* f, lval l);
 lval lfloor(lval* f, lval l);
 lval lfref(lval* f, lval l);
-lval lfuncall(lval* f, lval l);
+lval lfuncall(lval* f, lval* l);
 lval lhash(lval* f, lval l);
 lval liboundp(lval* f, lval l);
 lval limakunbound(lval* f, lval l);
