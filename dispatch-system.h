@@ -9,6 +9,8 @@
 // be worked out, but for now we have to suffer with it.
 enum initial_dispatchable_enum {
   PLACEHOLDER_DONT_USE,
+  DECLARE,
+  SPECIAL,
   QUOTE,
   LET,
   LET_STAR,
