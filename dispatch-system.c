@@ -1,6 +1,7 @@
 
 #include <ctype.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "defs.h"
 #include "dispatch-system.h"
