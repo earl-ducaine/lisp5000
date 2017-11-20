@@ -27,9 +27,9 @@ struct initial_symbol initial_symbols[] =
     {"&AUX"},
     {"&ALLOW-OTHER-KEYS"},
     // Declarations
-    {"DECLARE", eval_declare, -1},
-    {"SPECIAL"},
     // functions macros, special forms
+    {"DECLARE", DECLARE, -1},
+    {"SPECIAL"},
     {"QUOTE", QUOTE, 1},
     {"LET", LET, -2},
     {"LET*", LET_STAR, -2},
@@ -111,6 +111,8 @@ struct initial_symbol initial_symbols[] =
 lval(*initial_dispatchables)() [] =
   {
     NULL,  // equivelent to PLACEHOLDER_DONT_USE
+    eval_declare,
+    NULL,
     eval_quote,
     eval_let,
     eval_letm,
