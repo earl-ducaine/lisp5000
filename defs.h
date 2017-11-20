@@ -80,7 +80,7 @@ lval liboundp(lval* f);
 lval limakunbound(lval* f);
 lval liref(lval* f);
 lval lival(lval* f);
-lval ljref(lval* f, lval l);
+lval ljref(lval* f);
 lval lldb(lval* f);
 lval lless(lval* f, lval* l);
 lval llist(lval* f, lval* l);
@@ -89,7 +89,7 @@ lval lload(lval* f, lval l);
 lval lmake_fs(lval* f, lval l);
 lval lmakef(lval* f);
 lval lmakei(lval* f, lval* l);
-lval lmakej(lval* f, lval l);
+lval lmakej(lval* f);
 lval lminus(lval* f, lval* l);
 lval lplus(lval* f, lval* l);
 lval lprint(lval* f, lval l);
@@ -103,8 +103,8 @@ lval lvalues(lval* f, lval* l);
 lval lwrite_fs(lval* f, lval l);
 lval setfcar(lval* f);
 lval setfcdr(lval* f);
-lval setfiref(lval* f, lval l);
-lval setfjref(lval* f, lval l);
+lval setfiref(lval* f);
+lval setfjref(lval* f);
 
 
 
