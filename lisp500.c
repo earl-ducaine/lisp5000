@@ -1088,10 +1088,10 @@ lval lival(lval* f) {
   return d2o(f, f[1]);
 }
 
-lval lmakei(lval* f, lval * h) {
+lval lmakei(lval* f, lval* h) {
   int i = 2;
   int l = o2i(f[1]);
-  lval *r = ma0(h, l);
+  lval* r = ma0(h, l);
   r[1] = f[2] | 4;
   memset(r + 2, 0, 4 * o2i(f[1]));
   for (f += 3; f < h; f++, i++) {
@@ -1228,6 +1228,7 @@ lval leval(lval* f, lval* h) {
   return eval(f - 1, f[1]);
 }
 
+// Print symbol
 void psym(lval p, lval n) {
   int i;
   if (!p)
@@ -1237,7 +1238,8 @@ void psym(lval p, lval n) {
     for (i = 0; i < o2s(m)[0] / 64 - 4; i++)
       putchar(o2z(m)[i]);
     putchar(':');
-  } for (i = 0; i < o2s(n)[0] / 64 - 4; i++)
+  }
+  for (i = 0; i < o2s(n)[0] / 64 - 4; i++)
       putchar(o2z(n)[i]);
 }
 
@@ -1321,7 +1323,8 @@ lval lprint(lval * f) {
   print(f[1]);
   return f[1];
 }
-int ep(lval * g, lval expr) {
+
+int ep(lval* g, lval expr) {
   int i;
   lval v = rvalues(g, eval(g, expr));
   if (car(v) == 8)
@@ -1336,6 +1339,7 @@ int ep(lval * g, lval expr) {
     printf(";no values\n");
   return 1;
 }
+
 char *exmsg[] = {"variable unbound", "function unbound",
 		 "array index out of bounds", "go tag not bound", "block name not bound",
 		 "catch tag not dynamically bound", "too many arguments", "too few arguments",

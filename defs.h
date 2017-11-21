@@ -105,7 +105,7 @@ lval setfcar(lval* f);
 lval setfcdr(lval* f);
 lval setfiref(lval* f);
 lval setfjref(lval* f);
-
+lval lgensym(lval* f);
 
 
 #endif

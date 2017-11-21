@@ -162,7 +162,7 @@ lval(*initial_dispatchables[])()  =
     lmake_fs,
     lhash,
     NULL,
-    NULL,
+    lgensym,
     lstring,
     lfasl,
     lmakej,
