@@ -36,7 +36,24 @@ lval set_function_pointer(int index);
 #endif
 
 lval eval_declare(lval* f, lval ex);
-
+lval liboundp(lval* f);
+lval eval_quote(lval* g, lval ex);
+lval eval_let(lval* f, lval ex);
+lval eval_letm(lval* f, lval ex);
+lval eval_flet(lval* f, lval ex);
+lval eval_labels(lval* f, lval ex);
+lval eval_macrolet(lval* f, lval ex);
+lval eval_symbol_macrolet(lval* f, lval ex);
+lval eval_setq(lval* f, lval ex);
+lval eval_function(lval* f, lval ex);
+lval eval_tagbody(lval* f, lval ex);
+lval eval_go(lval* f, lval ex);
+lval eval_block(lval* f, lval ex);
+lval eval_return_from(lval* f, lval ex);
+lval eval_catch(lval* f, lval ex);
+lval eval_throw(lval* f, lval ex);
+lval eval_unwind_protect(lval* f, lval ex);
+lval eval_if(lval* f, lval ex);
 
 
 #endif

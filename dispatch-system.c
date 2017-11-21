@@ -1,16 +1,13 @@
 
 #include <ctype.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "defs.h"
 #include "dispatch-system.h"
 
-
-
 lval set_function_pointer(int index) {
 }
-
-
 
 struct initial_symbol initial_symbols[] =
   // 'Special' base objects.
@@ -26,10 +23,9 @@ struct initial_symbol initial_symbols[] =
     {"&ENVIRONMENT"},
     {"&AUX"},
     {"&ALLOW-OTHER-KEYS"},
-    // Declarations
-    {"DECLARE", eval_declare, -1},
-    {"SPECIAL"},
     // functions macros, special forms
+    {"DECLARE", DECLARE, -1},
+    {"SPECIAL"},
     {"QUOTE", QUOTE, 1},
     {"LET", LET, -2},
     {"LET*", LET_STAR, -2},
@@ -59,7 +55,7 @@ struct initial_symbol initial_symbols[] =
     {"BACKQUOTE"},
     {"UNQUOTE"},
     {"UNQUOTE-SPLICING"},
-    {"IBOUNDP", liboundp, 2},
+    {"IBOUNDP", IBOUNDP, 2},
     {"LISTEN-FILE-STREAM", LISTEN_FILE_STREAM, 1},
     {"LIST", LIST, -1},
     {"VALUES", VALUES, -1},
@@ -108,9 +104,13 @@ struct initial_symbol initial_symbols[] =
     {"UNAME", UNAME, 0}
   };
 
-lval(*initial_dispatchables)() [] =
+//typedef lval(*initial_dispatchable)(lval* g, lval n,...);
+
+void* initial_dispatchables[]  =
   {
     NULL,  // equivelent to PLACEHOLDER_DONT_USE
+    eval_declare,
+    NULL,
     eval_quote,
     eval_let,
     eval_letm,
