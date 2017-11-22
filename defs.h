@@ -18,15 +18,6 @@ void debug_write_local(char* debug_string, long arg);
 lval get_function_pointer(int index);
 lval set_function_pointer(int index);
 
-/* struct initial_symbol { */
-/*   const char *name; */
-/*   lval(*fun) (); */
-/*   cint_platform argc; */
-/*   lval(*setfun) (); */
-/*   cint_platform setargc; */
-/*   lval sym; */
-/* }; */
-
 #define allocate_region allocate_region_mmap
 
 #if DEBUG
