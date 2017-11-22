@@ -106,6 +106,6 @@ lval setfcdr(lval* f);
 lval setfiref(lval* f);
 lval setfjref(lval* f);
 lval lgensym(lval* f);
-
+lval lcode_char(lval* f);
 
 #endif

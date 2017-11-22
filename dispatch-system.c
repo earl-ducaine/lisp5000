@@ -178,7 +178,7 @@ lval(*initial_dispatchables[])()  =
     lload,
     liref,
     NULL,
-    NULL,
+    lcode_char,
     lchar_code,
     NULL,
     NULL,
