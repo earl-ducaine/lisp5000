@@ -341,13 +341,15 @@ lval ma(lval * g, int n,...) {
 lval ms(lval * g, int n,...) {
   va_list v;
   int i;
-  lval *m;
- st:	va_start(v, n);
+  lval* m;
+ st:
+  va_start(v, n);
   m = allocate_memory(g, n + 2);
   if (!m) {
     gc(g);
     goto st;
-  } *m = n << 8;
+  }
+  *m = n << 8;
   for (i = -1; i < n; i++)
     m[2 + i] = va_arg(v, lval);
   return s2o(m);
@@ -564,11 +566,8 @@ lval call(lval * f, lval fn, unsigned d) {
     dbgr(g, 7, 0, f);
   if (d > (unsigned) o2s(fn)[4])
     dbgr(g, 6, 0, f);
-  // Cast lisp word pointer lval* a function pointer which takes an
-  // arbitrary number of arguments and returns a lisp word lval
-  void* void_pointer = lisp_word_to_c_pointer(o2s(fn)[2]);
-  lval (*function_pointer) () =
-    (lval (*) ()) void_pointer;
+  // function call
+  lval (*function_pointer) () = o2s(fn)[2];
   return (*function_pointer)(f, f + d + 1);
 }
 
@@ -776,12 +775,9 @@ lval eval_go(lval* f, lval ex) {
   lval b = *binding(f, car(ex), 3, 0);
   if (o2s(cdr(b))[2]) {
     unwind(f, car(b));
-    void* void_pointer = lisp_word_to_c_pointer(o2s(cdr(b))[2]);
-    lval (*function_pointer) () =
-      (lval (*) ()) void_pointer;
-    // void* function_pointer = o2s(cdr(b))[2];
-    longjmp(*(jmp_buf *) (function_pointer), car(ex));
-  } dbgr(f, 9, car(ex), &ex);
+    longjmp(*(jmp_buf *) (o2s(cdr(b))[2]), car(ex));
+  }
+  dbgr(f, 9, car(ex), &ex);
   longjmp(top_jmp, 1);
 }
 
@@ -806,12 +802,7 @@ lval eval_return_from(lval* f, lval ex) {
   jmp_buf *jmp;
   NF(1) T = 0;
   b = *binding(g, car(ex), 4, 0);
-  void* void_pointer = lisp_word_to_c_pointer(o2s(cdr(b))[2]);
-  lval (*function_pointer) () =
-    (lval (*) ()) void_pointer;
-  // void* function_pointer = o2s(cdr(b))[2];
-  // longjmp(*(jmp_buf *) (function_pointer))
-    jmp = (jmp_buf *) function_pointer;
+  jmp = (jmp_buf *) o2s(cdr(b))[2];
   if (jmp) {
     unwind(g, car(b));
     T = rvalues(g, evca(g, cdr(ex)));
@@ -848,8 +839,7 @@ lval eval_throw(lval* f, lval ex) {
       unwind(g, c);
       T = evca(g, cdr(ex));
       T = rvalues(g, T);
-      void* void_pointer = o2s(cdar(c))[2];
-      longjmp(*(jmp_buf*) (void_pointer), cons(g, T, 0));
+      longjmp(*(jmp_buf*) (o2s(cdar(c))[2]), cons(g, T, 0));
     }
   dbgr(g, 5, T, &T);
   goto st;
@@ -1635,19 +1625,11 @@ int main(int argc, char *argv[]) {
     ins = stdin;
     initial_symbols[i].sym = sym;
     if (initial_symbols[i].function_index > 0) {
-      o2a(sym)[5] = ma(g,
-		       5,
-		       212,
-		       ms(g,
-			  3,
-			  212,
-			  get_initial_dispatchable(initial_symbols[i].function_index),
-			  0,
-			  -1),
-		       0,
-		       0,
-		       0,
-		       sym);
+      lval ms_lval =
+	ms(g, 3, 212,
+	   get_initial_dispatchable(initial_symbols[i].function_index), 0, -1);
+      o2a(sym)[5] =
+	ma(g, 5, 212, ms_lval, 0, 0, 0, sym);
     }
     if (initial_symbols[i].function_index > 0)
       o2a(sym)[6] = ma(g, 5, 212, ms(g, 3, 212, get_initial_dispatchable(initial_symbols[i].setf_function_index), 0, -1), 8, 0, 0, sym);
