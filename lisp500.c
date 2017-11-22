@@ -848,9 +848,8 @@ lval eval_throw(lval* f, lval ex) {
       unwind(g, c);
       T = evca(g, cdr(ex));
       T = rvalues(g, T);
-      void* void_pointer = lisp_word_to_c_pointer(o2s(cdar(c))[2]);
+      void* void_pointer = o2s(cdar(c))[2];
       longjmp(*(jmp_buf*) (void_pointer), cons(g, T, 0));
-      // longjmp(*(jmp_buf*) (o2s(cdar(c))[2]), cons(g, T, 0));
     }
   dbgr(g, 5, T, &T);
   goto st;
