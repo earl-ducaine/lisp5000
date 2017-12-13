@@ -17,8 +17,8 @@
    <1-0>  Flag bits indicate the type of sub-category pointed to: 
           00  For immediates 
           01  Conses 
-          02  Boxed objects 
-          03  Strings and doubles
+          10  Boxed objects 
+          11  Strings and doubles
 
 ** Lisp objects
 

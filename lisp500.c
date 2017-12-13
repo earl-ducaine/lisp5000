@@ -171,24 +171,45 @@ lval *binding(lval * f, lval sym, int type, int *macro) {
   return o2a(sym) + 4 + type;
 }
 
-void gcm(lval v) {
-  lval *t;
+// low level lval oriented garbage collection.  val is a lval, check
+// to see if what it's pointing to is of type <11> (cons and
+// objects?). If so, check to see if what it's pointing to has already
+// been marked as garbage collection started and if so, then mark what
+// it's pointing to as garbage collection started and try to collect
+// it.
+void garbage_collect_memory(lval lpointer) {
+  lval* target;
   int i;
  st:
-  t = lisp_word_to_c_pointer(v & ~3);
-  if (v & 3 && !(t[0] & 4)) {
-    t[0] |= 4;
-    switch (v & 3) {
+  // Mask type
+  target = lisp_word_to_c_pointer(lpointer & ~3);
+  // If what lpointer points to (i.e. target) is tagged as something
+  // other than an immediate (not 00), and garbage collection isn't in
+  // prgress on target (i.e. *its* 100 hasn't been set), then set it
+  // to be in progress and try and collect it and everything
+  // reachable from target.
+  if ((lpointer & 3) && !(target[0] & 4)) {
+    target[0] |= 4;
+    switch (lpointer & 3) {
     case 1:
-      gcm(t[0] - 4);
-      v = t[1];
+      // Cons.  Pass value with gc bit switched *off* to prevent that
+      // value from interfering with dereferencing?
+      garbage_collect_memmory(target[0] - 4);
+      // clever way of saving us from one recusion. Poor man's tail
+      // recursion?
+      lpointer = target[1];
       goto st;
     case 2:
-      gcm(t[1] - 4);
-      if (t[0] >> 8) {
-	for (i = 1; i < t[0] >> 8; i++)
-	  gcm(t[i + 1]);
-	v = t[i + 1];
+      // boxed object.  Why do we have to call with with garbage
+      // collecting bit switched off?  Espectially because we didn't
+      // switch it on?
+      garbage_collect_memmory(target[1] - 4);
+      // number of items target points to.
+      if (target[0] >> 8) {
+	for (i = 1; i < t[0] >> 8; i++) {
+	  garbage_collect_memmory(t[i + 1]);
+	}
+	lpointer = t[i + 1];
 	goto st;
       }
     }
@@ -219,15 +240,15 @@ lval gc(lval* f) {
     memset(memf, 0, 4 * memf[1]);
     memf = (lval *) n;
   }
-  gcm(xvalues);
-  gcm(pkgs);
-  gcm(dyns);
+  garbage_collect_memmory(xvalues);
+  garbage_collect_memmory(pkgs);
+  garbage_collect_memmory(dyns);
   for (; f > stack; f--) {
     if (((*f & 3) && (lisp_word_to_c_pointer(*f) < (void*)memory) ||
 	 (lisp_word_to_c_pointer(*f) > (void*)(memory + memory_size / 4)))) {
       printf("%x\n", *f);
     }
-    gcm(*f);
+    garbage_collect_memmory(*f);
   }
   memf = 0;
   m = memory;
@@ -320,15 +341,17 @@ lval *mb0(lval * g, int n) {
   return m;
 }
 
-lval ma(lval * g, int n,...) {
+lval ma(lval* g, int n, ...) {
   va_list v;
   int i;
-  lval *m;
- st:	va_start(v, n);
+  lval* m;
+ st:
+  va_start(v, n);
   m = allocate_memory(g, n + 2);
   if (!m) {
-    for (i = -1; i < n; i++)
-      gcm(va_arg(v, lval));
+    for (i = -1; i < n; i++) {
+      garbage_collect_memmory(va_arg(v, lval));
+    }
     gc(g);
     goto st;
   }
@@ -338,7 +361,7 @@ lval ma(lval * g, int n,...) {
   return a2o(m);
 }
 
-lval ms(lval * g, int n,...) {
+lval ms(lval* g, int n, ...) {
   va_list v;
   int i;
   lval* m;
@@ -381,8 +404,8 @@ unsigned o2u(lval o) {
 lval cons(lval* g, lval a, lval d) {
   lval* c = allocate_memory(g, 2);
   if (!c) {
-    gcm(a);
-    gcm(d);
+    garbage_collect_memmory(a);
+    garbage_collect_memmory(d);
     gc(g);
     c = allocate_memory(g, 2);
   }
@@ -1639,8 +1662,9 @@ int main(int argc, char *argv[]) {
       o2a(sym)[5] =
 	ma(g, 5, 212, ms_lval, 0, 0, 0, sym);
     }
-    if (initial_symbols[i].function_index > 0)
+    if (initial_symbols[i].function_index > 0) {
       o2a(sym)[6] = ma(g, 5, 212, ms(g, 3, 212, get_initial_dispatchable(initial_symbols[i].setf_function_index), 0, -1), 8, 0, 0, sym);
+    }
     o2a(sym)[7] = i << 3;
   }
   kwp = mkp(g, "", "KEYWORD");
