@@ -1617,6 +1617,9 @@ int main(int argc, char *argv[]) {
   memset(stack, 0, 256 * 1024);
   g = stack + 5;
   pkg = mkp(g, "CL", "COMMON-LISP");
+  // Process each of the initial symbols and define them based on the
+  // values associated with them, i.e. is it a function, contstant or
+  // some type of special form.
   for (i = 0; i < 88; i++) {
     sym = intern_symbol(g, pkg, c_string_to_stack_argument(g, initial_symbols[i].name));
     if (i < 10) {
@@ -1630,9 +1633,22 @@ int main(int argc, char *argv[]) {
 	   get_initial_dispatchable(initial_symbols[i].function_index), 0, -1);
       o2a(sym)[5] =
 	ma(g, 5, 212, ms_lval, 0, 0, 0, sym);
+      //    }
+      //    if (initial_symbols[i].function_index > 0) {
+      o2a(sym)[6] = ma(g,
+		       5,
+		       212,
+		       ms(g,
+			  3,
+			  212,
+			  get_initial_dispatchable(initial_symbols[i].setf_function_index),
+			  0,
+			  -1),
+		       8,
+		       0,
+		       0,
+		       sym);
     }
-    if (initial_symbols[i].function_index > 0)
-      o2a(sym)[6] = ma(g, 5, 212, ms(g, 3, 212, get_initial_dispatchable(initial_symbols[i].setf_function_index), 0, -1), 8, 0, 0, sym);
     o2a(sym)[7] = i << 3;
   }
   kwp = mkp(g, "", "KEYWORD");
